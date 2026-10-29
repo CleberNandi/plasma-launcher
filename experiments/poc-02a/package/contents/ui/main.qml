@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
@@ -101,26 +102,38 @@ PlasmoidItem {
                 ListView {
                     id: favoritesList
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 100
+                    visible: root.favoritesInitialized
+                    Layout.minimumHeight: 84
+                    Layout.preferredHeight: 84
+                    Layout.maximumHeight: 84
+                    orientation: ListView.Horizontal
+                    boundsBehavior: Flickable.StopAtBounds
                     clip: true
                     spacing: 4
                     model: root.favoritesInitialized ? favoritesProbe : null
 
-                    delegate: RowLayout {
+                    QQC2.ScrollBar.horizontal: QQC2.ScrollBar {
+                        policy: QQC2.ScrollBar.AsNeeded
+                    }
+
+                    delegate: ColumnLayout {
+                        id: favoriteDelegate
                         required property var model
-                        width: favoritesList.width
-                        height: 32
+                        width: 140
+                        height: 68
                         spacing: 8
 
                         Kirigami.Icon {
-                            source: model.decoration
-                            implicitWidth: 24
-                            implicitHeight: 24
+                            source: favoriteDelegate.model.decoration
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: 32
+                            implicitHeight: 32
                         }
 
                         PlasmaComponents.Label {
-                            text: String(model.display ?? "")
+                            text: String(favoriteDelegate.model.display ?? "")
                             Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
                         }
                     }
@@ -142,12 +155,18 @@ PlasmoidItem {
                     clip: true
                     spacing: 4
                     model: appsModel
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    QQC2.ScrollBar.vertical: QQC2.ScrollBar {
+                        id: categoryScrollBar
+                        policy: QQC2.ScrollBar.AsNeeded
+                    }
 
                     delegate: PlasmaComponents.Button {
                         required property int index
                         required property var model
 
-                        width: categoryList.width
+                        width: categoryList.width - categoryScrollBar.width - 4
                         text: String(model.display ?? "")
                         onClicked: {
                             root.selectedCategoryIndex = index;
@@ -166,6 +185,12 @@ PlasmoidItem {
                     clip: true
                     spacing: 4
                     model: appsModel.count > 0 ? appsModel.modelForRow(root.selectedCategoryIndex) : null
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    QQC2.ScrollBar.vertical: QQC2.ScrollBar {
+                        id: applicationScrollBar
+                        policy: QQC2.ScrollBar.AsNeeded
+                    }
 
                     delegate: RowLayout {
                         id: applicationDelegate
@@ -173,7 +198,7 @@ PlasmoidItem {
                         required property var model
                         required property int index
 
-                        width: applicationList.width
+                        width: applicationList.width - applicationScrollBar.width - 4
                         height: 48
                         spacing: 10
 
