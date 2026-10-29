@@ -200,3 +200,27 @@ somente pelo botão. Registrar eventuais erros QML.
 Referência: https://doc.qt.io/qt-6/qml-qtquick-controls-scrollbar.html
 ScrollBar pode ser anexada diretamente a ListView, que fornece a geometria
 de rolagem. A interface observa o modelo Qt sem copiar ou reordenar seus dados.
+
+## Evidência visual do ajuste de layout — 29/10/2026
+
+Revisão disponibilizada para o teste: 7ecc5e1.
+Capturas fornecidas pelo usuário após a sincronização solicitada:
+
+- Antes da leitura, faixa de favoritos oculta e modelo não inicializado.
+- Após o clique, quatro favoritos simultaneamente visíveis: Firefox,
+  Configurações do sistema, Dolphin e Discover.
+- Nome longo elidido no card de Configurações do sistema.
+- Barra vertical de categorias visível; rolagem até Utilitários demonstrada.
+- Navegação para Desenvolvimento e Utilitários demonstrada.
+- Barra vertical de aplicativos visível em listas maiores.
+- Botão Abrir Kate continua restrito às entradas Kate mostradas.
+
+Aceita a apresentação visual nas dimensões das capturas. Não há evidência
+nesta rodada de ausência de erros no terminal, rolagem horizontal em janela
+estreita, acesso ao último aplicativo ou nova execução do Kate.
+Esses pontos não foram marcados como homologados.
+
+Próximo incremento: planejar PoC 02E de atualização do catálogo e ciclo de vida
+dos submodelos. Antes de implementar, consultar a API instalada e definir um
+teste reproduzível com desktop entry temporária, sem instalar aplicativos,
+reiniciar Plasma ou alterar favoritos. Não executar esse teste nesta etapa.
