@@ -3,7 +3,7 @@
 **Versão:** 0.2
 **Stack:** KDE Plasma 6, Qt Quick 6, QML, JavaScript integrado ao QML  
 **Ambiente-alvo:** Arch Linux, KDE Plasma 6, sessão Wayland  
-**Status:** PoC 02C.2 homologada funcionalmente; PoC 02D.1 em preparação
+**Status:** PoC 02C.2 e leitura/apresentação 02D.1 homologadas funcionalmente; layout e ordenação pendentes
 
 ## Objetivo
 
@@ -136,7 +136,7 @@ Evitar escrever anotações extensas que apenas repetem a documentação oficial
 
 ## Próxima ação
 
-Homologar a leitura experimental 02D.1 conforme `docs/poc/POC-02-kde-catalog.md`. Comparar o contexto persistido instance-4 com o menu atual sem editar favoritos; depois investigar ciclo de vida e atualização dinâmica.
+Corrigir o layout experimental de favoritos e categorias conforme as evidências da PoC 02D.1. A correspondência de conteúdo com o menu atual foi confirmada; ordenação, vínculo entre client e applet, ciclo de vida e atualização dinâmica permanecem pendentes.
 
 ## Aprendizagem aplicada — PoC 02C
 
