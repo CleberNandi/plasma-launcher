@@ -1,0 +1,13 @@
+{
+  "KPlugin": {
+    "Id": "dev.nandi.plasmalauncher",
+    "Name": "Plasma Launcher Lab",
+    "Description": "Launcher experimental para KDE Plasma 6",
+    "Icon": "start-here-kde",
+    "Category": "Application Launchers",
+    "Version": "0.1.0",
+    "License": "MIT"
+  },
+  "KPackageStructure": "Plasma/Applet",
+  "X-Plasma-API-Minimum-Version": "6.0"
+}
