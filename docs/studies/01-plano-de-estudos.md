@@ -136,7 +136,7 @@ Evitar escrever anotações extensas que apenas repetem a documentação oficial
 
 ## Próxima ação
 
-Corrigir o layout experimental de favoritos e categorias conforme as evidências da PoC 02D.1. A correspondência de conteúdo com o menu atual foi confirmada; ordenação, vínculo entre client e applet, ciclo de vida e atualização dinâmica permanecem pendentes.
+Homologar a PoC 02E.1: refresh explícito, sinais do modelo e reconexão dos submodelos. O layout tem evidência visual registrada; ordenação de favoritos e atualização dinâmica continuam pendentes.
 
 ## Aprendizagem aplicada — PoC 02C
 
@@ -172,3 +172,19 @@ verificados na workstation. A API privada segue provisória.
   Contagem zero é um estado a observar, não um diagnóstico definitivo.
 - A propriedade favorites não é usada como uma lista a sobrescrever.
   A PoC apresenta dados; migração e edição ficam fora deste incremento.
+
+## Aprendizagem aplicada — PoC 02E.1
+
+- Connections observa sinais do RootModel sem misturar a infraestrutura com
+  delegates. Handlers usam function onNomeDoSinal().
+- modelAboutToBeReset marca referências posicionais como inválidas. A view
+  remove temporariamente seu submodelo antes de voltar a pedir modelForRow.
+- Qt.callLater adia a reconexão até o controle retornar ao event loop; não é
+  uma espera por tempo arbitrário nem um serviço de polling.
+- Uma revisão observável força o binding a consultar novamente o submodelo,
+  mesmo quando a contagem de categorias permanece igual.
+- Reconstrução de modelo não preserva identidade por índice: a PoC volta à
+  primeira categoria deliberadamente. Preservação por identidade estável é
+  outra decisão, ainda não implementada.
+- Contadores são evidência de sinais recebidos. Refresh manual bem-sucedido
+  não comprova detecção automática de mudanças nos arquivos .desktop.
