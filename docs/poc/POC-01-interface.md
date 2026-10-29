@@ -18,15 +18,24 @@ QML e catálogo simulado de aplicativos.
 - Interface renderizada corretamente.
 - Processo encerrado com código 0.
 
-## Pendente
-- Confirmar troca de categorias.
-- Validar representação compacta no painel.
-- Integrar catálogo real de aplicações (PoC 02).
+## Situação após a homologação
+
+- [x] Renderização da interface QML.
+- [x] Navegação entre categorias.
+- [x] Integração com o painel.
+- [x] Abertura e fechamento do popup.
+- [x] Estabilidade da geometria.
+- [x] KRunner preservado.
+- [ ] Integração com catálogo real (PoC 02).
+- [ ] Execução de aplicativos reais (PoC 02).
+
 
 ## Restrições
-- Sem C++.
-- Sem instalação no painel durante esta PoC.
-- KRunner permanece inalterado.
+
+- C++ descartado.
+- Dados simulados na PoC 01.
+- Instalação local realizada apenas na etapa 01B.
+- Launcher original preservado.
 
 
 
