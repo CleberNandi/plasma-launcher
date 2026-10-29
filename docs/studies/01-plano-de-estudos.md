@@ -3,7 +3,7 @@
 **Versão:** 0.2
 **Stack:** KDE Plasma 6, Qt Quick 6, QML, JavaScript integrado ao QML  
 **Ambiente-alvo:** Arch Linux, KDE Plasma 6, sessão Wayland  
-**Status:** PoC 01 integrada; PoC 02C.2 em homologação
+**Status:** PoC 02C.2 homologada funcionalmente; PoC 02D.1 em preparação
 
 ## Objetivo
 
@@ -136,7 +136,7 @@ Evitar escrever anotações extensas que apenas repetem a documentação oficial
 
 ## Próxima ação
 
-Homologar a PoC 02C.2 conforme `docs/poc/POC-02-kde-catalog.md`, registrando SHA, retorno de trigger e abertura visual do Kate. Depois investigar favoritos nativos e atualização do catálogo.
+Homologar a leitura experimental 02D.1 conforme `docs/poc/POC-02-kde-catalog.md`. Comparar o contexto persistido instance-4 com o menu atual sem editar favoritos; depois investigar ciclo de vida e atualização dinâmica.
 
 ## Aprendizagem aplicada — PoC 02C
 
@@ -159,3 +159,16 @@ Exercício imediato: localizar Kate, anotar a categoria e entender por que o
 índice passado a trigger é o do aplicativo. Repetir após trocar de categoria.
 Limite: não há runtime KDE/Qt neste ambiente Work; lint e execução devem ser
 verificados na workstation. A API privada segue provisória.
+
+## Aprendizagem aplicada — PoC 02D.1
+
+- A assinatura em qmltypes descreve a interface; não prova ausência de efeitos
+  colaterais de uma chamada nativa.
+- ID de applet e client de persistência são conceitos distintos. O applet 66
+  observado não autoriza deduzir que o contexto antigo instance-4 foi migrado.
+- A view fica sem modelo até o clique. Após initForClient, o binding conecta a
+  ListView diretamente ao modelo Qt; notificações do modelo atualizam a view.
+- Uma chamada de inicialização pode retornar antes da consulta terminar.
+  Contagem zero é um estado a observar, não um diagnóstico definitivo.
+- A propriedade favorites não é usada como uma lista a sobrescrever.
+  A PoC apresenta dados; migração e edição ficam fora deste incremento.

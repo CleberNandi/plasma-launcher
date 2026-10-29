@@ -11,6 +11,15 @@ PlasmoidItem {
     property int selectedCategoryIndex: 0
     property string launchStatus: "Nenhuma execução solicitada"
 
+    // Contexto persistido observado; não equivale necessariamente ao Kickoff 66.
+    readonly property string favoritesClient: "org.kde.plasma.kickoff.favorites.instance-4"
+    property bool favoritesInitialized: false
+    property string favoritesStatus: "Leitura ainda não solicitada"
+
+    Kicker.KAStatsFavoritesModel {
+        id: favoritesProbe
+    }
+
     Plasmoid.icon: "applications-all"
 
     Kicker.RootModel {
@@ -26,7 +35,7 @@ PlasmoidItem {
 
     fullRepresentation: Item {
         Layout.preferredWidth: 700
-        Layout.preferredHeight: 500
+        Layout.preferredHeight: 680
 
         ColumnLayout {
             anchors.fill: parent
@@ -34,7 +43,7 @@ PlasmoidItem {
             spacing: 12
 
             PlasmaComponents.Label {
-                text: "PoC 02C — Catálogo KDE e execução controlada"
+                text: "PoC 02D.1 — Catálogo e leitura de favoritos"
                 font.bold: true
             }
 
@@ -46,6 +55,76 @@ PlasmoidItem {
                 text: root.launchStatus
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+
+                PlasmaComponents.Label {
+                    text: "Contexto de favoritos: " + root.favoritesClient
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    PlasmaComponents.Button {
+                        text: "Ler contexto instance-4"
+                        enabled: !root.favoritesInitialized
+                        onClicked: {
+                            try {
+                                favoritesProbe.initForClient(root.favoritesClient);
+                                root.favoritesInitialized = true;
+                                root.favoritesStatus = "Inicialização solicitada; compare com seu menu atual";
+                            } catch (error) {
+                                root.favoritesStatus = "Falha na inicialização: " + String(error);
+                            }
+                        }
+                    }
+
+                    PlasmaComponents.Label {
+                        text: root.favoritesInitialized
+                            ? "Entradas no modelo: " + favoritesProbe.count
+                            : "Modelo não inicializado"
+                        Layout.fillWidth: true
+                    }
+                }
+
+                PlasmaComponents.Label {
+                    text: root.favoritesStatus
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+
+                ListView {
+                    id: favoritesList
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 100
+                    clip: true
+                    spacing: 4
+                    model: root.favoritesInitialized ? favoritesProbe : null
+
+                    delegate: RowLayout {
+                        required property var model
+                        width: favoritesList.width
+                        height: 32
+                        spacing: 8
+
+                        Kirigami.Icon {
+                            source: model.decoration
+                            implicitWidth: 24
+                            implicitHeight: 24
+                        }
+
+                        PlasmaComponents.Label {
+                            text: String(model.display ?? "")
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
             }
 
             RowLayout {

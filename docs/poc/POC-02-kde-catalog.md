@@ -35,7 +35,7 @@ compatibilidade, execução e ciclo de vida dos modelos.
 ## Próximos testes
 
 - [x] PoC 02C.1 — Roles display, decoration e description homologadas.
-- [ ] PoC 02C.2 — Execução controlada preparada; homologação desta revisão pendente.
+- [x] PoC 02C.2 — Homologação funcional registrada em 29/10/2026.
 - [ ] PoC 02D — Favoritos.
 - [ ] PoC 02E — Atualização dinâmica do catálogo.
 
@@ -84,7 +84,7 @@ git fetch origin
 git switch feat/poc-02-kde-app-catalog
 git pull --ff-only origin feat/poc-02-kde-app-catalog
 git log -1 --oneline
-plasmoidviewer -a "$PWD/experiments/poc-02a/package"
+plasmawindowed "$PWD/experiments/poc-02a/package"
 ```
 
 Usar o visualizador já disponível; não instalar componentes nem reiniciar o Plasma.
@@ -124,3 +124,57 @@ navegação em subcategorias ou integração ao painel do launcher principal.
 
 Observação: Educação contém Ciências e Matemática como subcategorias;
 a navegação hierárquica precisa ser avaliada antes da integração.
+
+## PoC 02D.1 — Leitura experimental de favoritos
+
+Baseline: 3d605ba. Implementação preparada; runtime ainda não homologado.
+
+Evidências fornecidas pela workstation:
+- kickerplugin.qmltypes exporta KAStatsFavoritesModel e initForClient(QString).
+- O Kickoff atual está no applet 66.
+- kactivitymanagerd-statsrc contém grupos Favorites para o client
+  org.kde.plasma.kickoff.favorites.instance-4, global e por atividade.
+- Não foi demonstrado que o contexto persistido 4 pertence ao Kickoff atual 66.
+  O client é explícito na tela; não inferir equivalência nem migrar dados.
+
+O botão Ler contexto instance-4 chama initForClient uma única vez por abertura.
+A view observa count e as roles display e decoration, sem polling ou cópia para
+ListModel. A atualização inicial pode ser assíncrona: count zero não comprova
+ausência de favoritos, nem inicialização bem-sucedida.
+
+Não há chamadas de adição, remoção, reordenação, migração ou execução no painel
+de favoritos. A execução controlada do Kate permanece apenas no catálogo.
+Não são atribuídos favorites, maxFavorites ou configurações do Kickoff.
+
+Limite de garantia: o qmltypes comprova a assinatura, não os efeitos internos
+de initForClient. A PoC não solicita alterações de favoritos, mas não oferece
+garantia de ausência de escrita interna pelo backend KDE (por exemplo,
+metadados de ordenação). Não qualificá-la como acesso estritamente read-only
+ao armazenamento. A implementação upstream correspondente ainda deve ser auditada.
+
+### Homologação 02D.1
+
+1. Com a árvore limpa, aplicar o patch e executar git diff --check.
+2. Abrir plasmawindowed "$PWD/experiments/poc-02a/package".
+3. Confirmar Modelo não inicializado; nenhum aplicativo deve abrir.
+4. Clicar Ler contexto instance-4 uma vez; aguardar o carregamento.
+5. Registrar quantidade, nomes, ícones e eventuais erros do terminal.
+6. Comparar visualmente com os favoritos do launcher atual, sem editar nenhum.
+7. Fechar e reabrir a PoC; conferir que exige novo clique.
+8. Revalidar navegação por categorias e execução explícita do Kate.
+
+Divergência de conteúdo ou ordem deve ser registrada, não corrigida escrevendo
+no contexto 4 ou 66. Nenhum favorito deve ser editado para preparar o teste.
+A listagem inicial não homologa troca de atividade nem sincronização dinâmica.
+
+## Evidência funcional 02D.1 — 29/10/2026
+
+- Leitura iniciada por clique explícito, usando instance-4.
+- Modelo retornou quatro entradas.
+- Nomes e ícones renderizados.
+- Usuário confirmou correspondência com os favoritos do menu atual.
+- Menu atual: Discover, Dolphin, Configurações do sistema e Firefox.
+- Ordem observada na PoC difere da apresentada pelo Kickoff.
+- Homologada leitura/apresentação; ordenação e vínculo com applet 66 pendentes.
+- Ausência de erros no terminal não confirmada.
+- Ajustes de layout pendentes: área de favoritos e categorias cortadas.
