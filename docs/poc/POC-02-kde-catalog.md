@@ -224,3 +224,59 @@ Próximo incremento: planejar PoC 02E de atualização do catálogo e ciclo de v
 dos submodelos. Antes de implementar, consultar a API instalada e definir um
 teste reproduzível com desktop entry temporária, sem instalar aplicativos,
 reiniciar Plasma ou alterar favoritos. Não executar esse teste nesta etapa.
+
+## PoC 02E.1 — Refresh explícito e ciclo de vida
+
+Preparado sobre 72ffca9. Implementação ainda não homologada no KDE.
+
+API apoiada nas evidências locais de kickerplugin.qmltypes: refresh() em
+AbstractModel e sinal refreshed em RootModel. Os sinais modelAboutToBeReset
+e modelReset são herdados do modelo Qt; verificar sua exposição no runtime.
+
+- Atualizar catálogo chama appsModel.refresh() somente por clique.
+- Contadores distinguem refreshed de modelReset; não presumir relação 1:1.
+  Podem começar acima de zero devido à população inicial.
+- Em modelAboutToBeReset, a view de aplicativos perde o submodelo (model null).
+- Em modelReset/refreshed, Qt.callLater agenda a reconexão para a próxima volta
+  do event loop. Isso evita solicitar modelForRow no meio do handler de reset;
+  não constitui garantia universal para toda sequência de sinais de API privada.
+- A seleção volta à linha zero: um índice antigo não identifica uma categoria.
+- A revisão refreshed participa do binding para reavaliar modelForRow mesmo
+  se a quantidade de categorias e selectedCategoryIndex não mudarem.
+- Cliques no catálogo/execução ficam bloqueados enquanto catalogReady é false.
+- Não há polling, Timer, comando externo, alteração de favoritos ou novo serviço.
+- O finally lógico do botão (callLater após try/catch) reabilita a view caso
+  refresh não emita sinais. O contador/status permite observar esse caso.
+
+### Homologação 02E.1 — sem alterar o catálogo instalado
+
+1. Sincronizar a branch limpa e abrir o pacote com plasmawindowed.
+2. Anotar os contadores iniciais (não exigir zero).
+3. Selecionar Desenvolvimento; localizar Kate sem abrir.
+4. Clicar Atualizar catálogo uma vez; registrar status e novos contadores.
+5. Conferir retorno à primeira categoria e aplicativos correspondentes.
+6. Voltar a Desenvolvimento e confirmar nomes, ícones e botão do Kate.
+7. Repetir três vezes, incluindo uma rodada após Ler contexto instance-4.
+8. Conferir que os quatro favoritos continuam apresentados.
+9. Abrir Kate uma vez pelo botão exclusivo; registrar resultado e erros QML.
+10. Fechar e reabrir para verificar uma nova sessão funcional.
+
+Não instalar nem remover apps para este teste; não reiniciar Plasma.
+Sem runtime Qt/KDE neste Work: revisão de código e whitespace não substituem
+essa homologação. Se o botão não produzir refreshed/reset, registrar os valores
+e investigar; não interpretar a ausência de sinal como atualização comprovada.
+
+### PoC 02E.2 — teste futuro de mudança real
+
+Após 02E.1: preparar fixture .desktop temporária com nome exclusivo, criação
+sem sobrescrever arquivos, remoção reversível e atualização do cache KDE.
+Medir inclusão, mudança de nome/categoria e remoção com a PoC aberta.
+Separar comportamento automático de atualização explícita; não clicar refresh
+antes de registrar se houve atualização espontânea. Nenhuma fixture é criada
+por este commit. Atualização dinâmica permanece não homologada.
+
+### Referências de aprendizagem
+
+- https://doc.qt.io/qt-6/qml-qtqml-connections.html
+- https://doc.qt.io/qt-6/qml-qtqml-qt.html#callLater-method
+- https://doc.qt.io/qt-6/qabstractitemmodel.html#modelAboutToBeReset
