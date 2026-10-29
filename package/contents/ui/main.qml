@@ -46,7 +46,9 @@ PlasmoidItem {
     toolTipMainText: "Plasma Launcher Lab"
 
     fullRepresentation: Item {
+        Layout.minimumWidth: 700
         Layout.preferredWidth: 700
+        Layout.minimumHeight: 460
         Layout.preferredHeight: 460
 
         ColumnLayout {
@@ -81,8 +83,14 @@ PlasmoidItem {
                 spacing: 16
 
                 ColumnLayout {
+                    id: categorySidebar
+
+                    Layout.minimumWidth: 190
                     Layout.preferredWidth: 190
+                    Layout.maximumWidth: 190
+                    Layout.fillWidth: false
                     Layout.fillHeight: true
+                    spacing: 6
 
                     Repeater {
                         model: ["Favoritos", "Todos", "Desenvolvimento", "Internet", "Gráficos", "Sistema"]
@@ -106,8 +114,12 @@ PlasmoidItem {
                 }
 
                 ColumnLayout {
+                    id: applicationArea
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.minimumWidth: 0
+                    spacing: 12
 
                     PlasmaComponents.Label {
                         text: root.selectedCategory
