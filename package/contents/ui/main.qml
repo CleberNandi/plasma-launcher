@@ -46,12 +46,16 @@ PlasmoidItem {
     toolTipMainText: "Plasma Launcher Lab"
 
     fullRepresentation: Item {
+        id: popupView
+
         Layout.minimumWidth: 700
         Layout.preferredWidth: 700
         Layout.minimumHeight: 460
         Layout.preferredHeight: 460
 
         ColumnLayout {
+            id: mainLayout
+
             anchors.fill: parent
             anchors.margins: 16
             spacing: 12
@@ -119,6 +123,7 @@ PlasmoidItem {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumWidth: 0
+                    Layout.maximumWidth: Number.POSITIVE_INFINITY
                     spacing: 12
 
                     PlasmaComponents.Label {
