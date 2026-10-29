@@ -1,4 +1,5 @@
 import QtQuick
+import QtQml
 import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
@@ -8,6 +9,39 @@ import org.kde.plasma.private.kicker as Kicker
 
 PlasmoidItem {
     id: root
+
+    property bool catalogReady: true
+    property int catalogRevision: 0
+    property int catalogResetCount: 0
+    property string catalogStatus: "Aguardando atualização do catálogo"
+
+    function finishCatalogRefresh() {
+        // Índices são posições: após reconstrução, voltar ao primeiro grupo.
+        root.selectedCategoryIndex = 0;
+        root.catalogReady = true;
+    }
+
+    Connections {
+        target: appsModel
+
+        function onModelAboutToBeReset() {
+            root.catalogReady = false;
+            root.launchStatus = "Nenhuma execução solicitada";
+        }
+
+        function onModelReset() {
+            root.catalogResetCount += 1;
+            Qt.callLater(root.finishCatalogRefresh);
+        }
+
+        function onRefreshed() {
+            root.catalogReady = false;
+            root.catalogRevision += 1;
+            root.catalogStatus = "Sinal refreshed recebido; seleção reiniciada";
+            root.launchStatus = "Nenhuma execução solicitada";
+            Qt.callLater(root.finishCatalogRefresh);
+        }
+    }
 
     property int selectedCategoryIndex: 0
     property string launchStatus: "Nenhuma execução solicitada"
@@ -44,12 +78,42 @@ PlasmoidItem {
             spacing: 12
 
             PlasmaComponents.Label {
-                text: "PoC 02D.1 — Catálogo e leitura de favoritos"
+                text: "PoC 02E.1 — Atualização do catálogo"
                 font.bold: true
             }
 
+            RowLayout {
+                Layout.fillWidth: true
+
+                PlasmaComponents.Button {
+                    text: "Atualizar catálogo"
+                    enabled: root.catalogReady
+                    onClicked: {
+                        root.catalogReady = false;
+                        root.launchStatus = "Nenhuma execução solicitada";
+                        root.catalogStatus = "Atualização manual solicitada";
+                        try {
+                            appsModel.refresh();
+                        } catch (error) {
+                            root.catalogStatus = "Falha ao atualizar: " + String(error);
+                        }
+                        Qt.callLater(root.finishCatalogRefresh);
+                    }
+                }
+
+                PlasmaComponents.Label {
+                    text: "Categorias: " + appsModel.count
+                        + " | refreshed: " + root.catalogRevision
+                        + " | resets: " + root.catalogResetCount
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+            }
+
             PlasmaComponents.Label {
-                text: "Entradas no modelo raiz: " + appsModel.count
+                text: root.catalogStatus
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
             }
 
             PlasmaComponents.Label {
@@ -155,6 +219,7 @@ PlasmoidItem {
                     clip: true
                     spacing: 4
                     model: appsModel
+                    enabled: root.catalogReady
                     boundsBehavior: Flickable.StopAtBounds
 
                     QQC2.ScrollBar.vertical: QQC2.ScrollBar {
@@ -184,7 +249,10 @@ PlasmoidItem {
                     Layout.maximumWidth: Number.POSITIVE_INFINITY
                     clip: true
                     spacing: 4
-                    model: appsModel.count > 0 ? appsModel.modelForRow(root.selectedCategoryIndex) : null
+                    model: root.catalogReady && root.catalogRevision >= 0
+                        && root.selectedCategoryIndex >= 0
+                        && root.selectedCategoryIndex < appsModel.count
+                        ? appsModel.modelForRow(root.selectedCategoryIndex) : null
                     boundsBehavior: Flickable.StopAtBounds
 
                     QQC2.ScrollBar.vertical: QQC2.ScrollBar {
@@ -232,11 +300,12 @@ PlasmoidItem {
                         PlasmaComponents.Button {
                             text: "Abrir Kate"
                             visible: String(applicationDelegate.model.display ?? "") === "Kate"
-                            enabled: visible
+                            enabled: visible && root.catalogReady
                             onClicked: {
                                 const currentModel = applicationList.model;
                                 // O índice pertence ao submodelo exibido, não ao RootModel.
-                                if (String(applicationDelegate.model.display ?? "") !== "Kate"
+                                if (!root.catalogReady
+                                    || String(applicationDelegate.model.display ?? "") !== "Kate"
                                     || !currentModel
                                     || typeof currentModel.trigger !== "function"
                                     || applicationDelegate.index < 0
