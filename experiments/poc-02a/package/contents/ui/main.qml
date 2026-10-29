@@ -131,12 +131,22 @@ PlasmoidItem {
                             enabled: visible
                             onClicked: {
                                 const currentModel = applicationList.model;
-                                if (!currentModel || applicationDelegate.index < 0) {
+                                // O índice pertence ao submodelo exibido, não ao RootModel.
+                                if (String(applicationDelegate.model.display ?? "") !== "Kate"
+                                    || !currentModel
+                                    || typeof currentModel.trigger !== "function"
+                                    || applicationDelegate.index < 0
+                                    || applicationDelegate.index >= currentModel.count) {
                                     root.launchStatus = "Modelo indisponível";
-                                    return ;
+                                    return;
                                 }
-                                const accepted = currentModel.trigger(applicationDelegate.index, "", null);
-                                root.launchStatus = accepted ? "Kicker aceitou a solicitação; confirme se Kate abriu" : "Kicker rejeitou a solicitação";
+                                try {
+                                    const result = currentModel.trigger(applicationDelegate.index, "", null);
+                                    root.launchStatus = "Retorno de Kicker.trigger: " + String(result)
+                                        + "; confirme visualmente se Kate abriu";
+                                } catch (error) {
+                                    root.launchStatus = "Falha ao solicitar abertura pelo Kicker: " + String(error);
+                                }
                             }
                         }
 

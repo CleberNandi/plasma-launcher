@@ -1,9 +1,9 @@
 # Plano de estudos — Plasma Launcher
 
-**Versão:** 0.1  
+**Versão:** 0.2
 **Stack:** KDE Plasma 6, Qt Quick 6, QML, JavaScript integrado ao QML  
 **Ambiente-alvo:** Arch Linux, KDE Plasma 6, sessão Wayland  
-**Status:** Planejamento — sem instalação ou desenvolvimento iniciado
+**Status:** PoC 01 integrada; PoC 02C.2 em homologação
 
 ## Objetivo
 
@@ -108,8 +108,8 @@ Aprender o necessário para desenvolver, testar e distribuir um launcher nativo 
 
 ## Sequência de entregas
 
-- [ ] **PoC 00 — Baseline:** verificar versões existentes e APIs, sem instalar pacotes.
-- [ ] **PoC 01 — Interface:** Plasmoid com popup e categorias simuladas.
+- [x] **PoC 00 — Baseline:** verificar versões existentes e APIs, sem instalar pacotes.
+- [x] **PoC 01 — Interface:** Plasmoid com popup e categorias simuladas.
 - [ ] **PoC 02 — Catálogo:** aplicativos e categorias reais por API validada.
 - [ ] **MVP 0.1 — Usabilidade:** favoritos, busca local, mouse/teclado.
 - [ ] **MVP 0.2 — Qualidade:** tema, acessibilidade, testes e distribuição.
@@ -136,4 +136,26 @@ Evitar escrever anotações extensas que apenas repetem a documentação oficial
 
 ## Próxima ação
 
-Criar o repositório local, adicionar este documento ao Git e realizar a **PoC 00** (levantamento do ambiente e APIs) antes de instalar qualquer dependência.
+Homologar a PoC 02C.2 conforme `docs/poc/POC-02-kde-catalog.md`, registrando SHA, retorno de trigger e abertura visual do Kate. Depois investigar favoritos nativos e atualização do catálogo.
+
+## Aprendizagem aplicada — PoC 02C
+
+- **Modelo e roles:** RootModel fornece categorias; modelForRow fornece o
+  submodelo. display, decoration e description são dados de apresentação.
+- **Delegate e índice:** cada delegate representa uma linha do modelo da view.
+  Seu index não é um identificador persistente e pode mudar com o catálogo.
+- **Sinais:** onClicked delimita a solicitação explícita; bindings e criação de
+  delegates não devem iniciar aplicativos.
+- **Bindings:** selectedCategoryIndex altera o submodelo apresentado pela view.
+  launchStatus atualiza o Label sem atribuir text duas vezes no mesmo objeto.
+- **Ciclo de vida:** delegates são criados e destruídos pela view; submodelos
+  pertencem à infraestrutura KDE. Não armazenar seus índices como identidade.
+  Resets e o sinal de atualização do RootModel serão investigados na PoC 02E.
+- **Diagnóstico:** o retorno de uma API e a evidência visual de abertura são
+  observações distintas. Registrar ambos, sem deduzir sucesso de uma janela
+  apenas pelo valor retornado.
+
+Exercício imediato: localizar Kate, anotar a categoria e entender por que o
+índice passado a trigger é o do aplicativo. Repetir após trocar de categoria.
+Limite: não há runtime KDE/Qt neste ambiente Work; lint e execução devem ser
+verificados na workstation. A API privada segue provisória.
