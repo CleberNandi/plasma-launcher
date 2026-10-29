@@ -9,6 +9,7 @@ PlasmoidItem {
     id: root
 
     property int selectedCategoryIndex: 0
+    property string launchStatus: "Nenhuma execução solicitada"
 
     Plasmoid.icon: "applications-all"
 
@@ -24,8 +25,8 @@ PlasmoidItem {
     }
 
     fullRepresentation: Item {
-        Layout.preferredWidth: 520
-        Layout.preferredHeight: 440
+        Layout.preferredWidth: 700
+        Layout.preferredHeight: 500
 
         ColumnLayout {
             anchors.fill: parent
@@ -33,12 +34,18 @@ PlasmoidItem {
             spacing: 12
 
             PlasmaComponents.Label {
-                text: "PoC 02A — Catálogo KDE"
+                text: "PoC 02C — Catálogo KDE e execução controlada"
                 font.bold: true
             }
 
             PlasmaComponents.Label {
                 text: "Entradas no modelo raiz: " + appsModel.count
+            }
+
+            PlasmaComponents.Label {
+                text: root.launchStatus
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
             }
 
             RowLayout {
@@ -49,8 +56,8 @@ PlasmoidItem {
                 ListView {
                     id: categoryList
 
-                    Layout.preferredWidth: 190
                     Layout.minimumWidth: 190
+                    Layout.preferredWidth: 190
                     Layout.maximumWidth: 190
                     Layout.fillHeight: true
                     clip: true
@@ -65,6 +72,7 @@ PlasmoidItem {
                         text: String(model.display ?? "")
                         onClicked: {
                             root.selectedCategoryIndex = index;
+                            root.launchStatus = "Nenhuma execução solicitada";
                         }
                     }
 
@@ -84,6 +92,7 @@ PlasmoidItem {
                         id: applicationDelegate
 
                         required property var model
+                        required property int index
 
                         width: applicationList.width
                         height: 48
@@ -114,6 +123,21 @@ PlasmoidItem {
                                 visible: text.length > 0
                             }
 
+                        }
+
+                        PlasmaComponents.Button {
+                            text: "Abrir Kate"
+                            visible: String(applicationDelegate.model.display ?? "") === "Kate"
+                            enabled: visible
+                            onClicked: {
+                                const currentModel = applicationList.model;
+                                if (!currentModel || applicationDelegate.index < 0) {
+                                    root.launchStatus = "Modelo indisponível";
+                                    return ;
+                                }
+                                const accepted = currentModel.trigger(applicationDelegate.index, "", null);
+                                root.launchStatus = accepted ? "Kicker aceitou a solicitação; confirme se Kate abriu" : "Kicker rejeitou a solicitação";
+                            }
                         }
 
                     }
