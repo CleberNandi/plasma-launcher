@@ -127,7 +127,8 @@ a navegação hierárquica precisa ser avaliada antes da integração.
 
 ## PoC 02D.1 — Leitura experimental de favoritos
 
-Baseline: 3d605ba. Implementação preparada; runtime ainda não homologado.
+Baseline de preparação: 3d605ba. Leitura/apresentação homologada no checkpoint
+15eb75b; ver evidência funcional abaixo.
 
 Evidências fornecidas pela workstation:
 - kickerplugin.qmltypes exporta KAStatsFavoritesModel e initForClient(QString).
@@ -154,7 +155,7 @@ ao armazenamento. A implementação upstream correspondente ainda deve ser audit
 
 ### Homologação 02D.1
 
-1. Com a árvore limpa, aplicar o patch e executar git diff --check.
+1. Com a árvore limpa, sincronizar a branch por git pull --ff-only.
 2. Abrir plasmawindowed "$PWD/experiments/poc-02a/package".
 3. Confirmar Modelo não inicializado; nenhum aplicativo deve abrir.
 4. Clicar Ler contexto instance-4 uma vez; aguardar o carregamento.
@@ -178,3 +179,24 @@ A listagem inicial não homologa troca de atividade nem sincronização dinâmic
 - Homologada leitura/apresentação; ordenação e vínculo com applet 66 pendentes.
 - Ausência de erros no terminal não confirmada.
 - Ajustes de layout pendentes: área de favoritos e categorias cortadas.
+
+## Ajuste de layout após 02D.1
+
+Implementado na branch de desenvolvimento; homologação visual pendente.
+
+- Favoritos em faixa horizontal de altura limitada, oculta antes da inicialização.
+- Cards com ícone e nome; barra horizontal quando o conteúdo exceder a largura.
+- Barras verticais para categorias e aplicativos, com espaço reservado nos delegates.
+- Listas mantêm recorte e rolagem: não é necessário exibir dez categorias ao mesmo
+  tempo, mas todas precisam ser alcançáveis.
+- Nenhuma mudança nos modelos, client de favoritos ou chamada de execução do Kate.
+
+Sincronizar a branch e abrir o pacote com plasmawindowed.
+Validar na janela inicial e após redimensionar: quatro favoritos acessíveis,
+rolagem até Utilitários e até o último aplicativo de uma categoria longa,
+ausência de sobreposição com as barras, leitura explícita e abertura do Kate
+somente pelo botão. Registrar eventuais erros QML.
+
+Referência: https://doc.qt.io/qt-6/qml-qtquick-controls-scrollbar.html
+ScrollBar pode ser anexada diretamente a ListView, que fornece a geometria
+de rolagem. A interface observa o modelo Qt sem copiar ou reordenar seus dados.
