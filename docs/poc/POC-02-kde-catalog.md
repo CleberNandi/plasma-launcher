@@ -1,6 +1,37 @@
 
 # PoC 02 — Catálogo real de aplicativos KDE
 
+
+## Estado consolidado do checkpoint — 30/10/2026
+
+Esta seção resume o estado atual; as seções seguintes preservam o histórico
+de preparação e testes, inclusive resultados parciais depois esclarecidos.
+
+| Escopo | Evidência e estado |
+| --- | --- |
+| Catálogo/categorias reais e roles | Homologação manual local |
+| Execução explícita do Kate | Homologação manual local via Kicker |
+| Favoritos nativos | Leitura/apresentação confirmadas; client instance-4 fixo |
+| Layout experimental | Capturas validaram faixa de favoritos e rolagem |
+| Refresh explícito | Fluxo manual observado e sinais registrados |
+| Mudanças automáticas | Probe independente PASS: inclusão, rename/categoria e remoção por publicação atômica |
+
+Evidência automatizada e limites: [POC-02E-automated.md](POC-02E-automated.md).
+O PASS local foi reportado pelo executor na revisão 1774f8c; Work não executou KDE.
+Scripts Bash tiveram validação de sintaxe; não há resultado de qmllint.
+
+Pendências antes da integração ao launcher principal:
+- Navegação hierárquica (Educação contém subcategorias).
+- Identidade estável dos aplicativos, em vez de restringir execução por display.
+- Definição do client de favoritos, ordenação e atividades; sem migrar dados.
+- Revisão/compatibilidade da API privada e ciclos de vida em outras versões.
+- Explicar divergência de reescrita direta versus publicação atômica se necessário.
+- Testar interface principal, teclado, busca local e painel em incremento próprio.
+
+A declaração X-Plasma-API-Minimum-Version 6.0 é metadado do pacote, não matriz
+de compatibilidade homologada. O experimento não deve ser apresentado como
+launcher pronto ou como suporte validado a todas as versões Plasma 6.
+
 ## Ambiente
 
 - Arch Linux
