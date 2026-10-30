@@ -1,7 +1,7 @@
 # PoC 03C — Pesquisa local de aplicativos
 
 **Data:** 30/10/2026.
-**Status:** preparada; import, lint Qt6 e homologação KDE pendentes.
+**Status:** busca por nome e abertura pelo resultado homologadas manualmente na rodada local; demais casos e lint detalhados abaixo.
 **Branch:** feat/poc-03-local-search.
 **Base:** de67c0960d707a2c7642bea8fe33000ea30ed610 (PoC 03B).
 
@@ -119,3 +119,28 @@ Não tratar o layout atual como direção visual definitiva.
 
 O PR de pesquisa tem base na branch da grade, dependente do PR #3, que por sua
 vez depende do #2. Rever base e diff antes de retarget após qualquer squash.
+
+## Evidência funcional recebida — 30/10/2026
+
+O usuário confirmou: “Funcionando a busca e abrindo app tb”.
+A captura mostra a consulta code, título Resultados (1) e o card Visual Studio Code.
+A barra lateral inclui Todos os aplicativos e categorias reais; Limpar está visível.
+
+Registrado como homologação manual positiva de busca por nome e abertura a partir
+do resultado. O HEAD local não foi reenviado; a rodada foi solicitada para 47e0f76
+e é compatível com essa implementação. A captura comprova o resultado apresentado;
+a abertura vem do relato explícito do usuário, não da imagem do launcher.
+
+A apresentação/filtragem em execução indica que o módulo necessário foi carregado
+nessa rodada, mas não substitui um relatório de lint. Não foram fornecidos saída
+do qmllint, código de saída ou logs do viewer nesta mensagem.
+
+Busca por descrição, múltiplos termos/maiúsculas, texto inexistente, Limpar/Escape,
+ativação de resultado que não é o primeiro e reconstrução do catálogo durante
+pesquisa não foram confirmados individualmente. Permanecem casos de regressão,
+sem desconsiderar o caminho positivo já comprovado. Não é necessário repetir
+a busca code sem nova mudança que justifique regressão.
+
+Próxima entrega de usabilidade: seleção/foco nos resultados e ativação por
+teclado. O refinamento visual maior permanece reservado para referências do
+usuário e avaliação de mockups. Nenhum merge autorizado ou realizado.
