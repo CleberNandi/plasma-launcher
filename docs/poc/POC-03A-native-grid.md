@@ -1,7 +1,7 @@
 # PoC 03A — Catálogo nativo na grade principal
 
 **Data:** 30/10/2026.
-**Status:** implementação preparada; lint e homologação KDE pendentes.
+**Status:** primeira grade renderizada em capturas; layout inicial rejeitado na revisão visual. Ajuste compacto preparado; novo lint/homologação pendentes.
 **Branch:** feat/poc-03-native-grid.
 **Base:** 73899697e76f8ce1a6152c7232455fc19f6b6b80, checkpoint da PoC 02.
 
@@ -110,3 +110,56 @@ painel Wayland. Para voltar ao laboratório, com árvore limpa:
 git switch feat/poc-02-kde-app-catalog
 plasmawindowed "$PWD/experiments/poc-02a/package"
 ```
+
+## Revisão visual e ajuste de densidade — 30/10/2026
+
+As capturas enviadas pelo usuário mostram a grade nativa em Desenvolvimento,
+os grupos Ciências/Matemática em Educação e LibreOffice Math dentro de Ciências.
+Isso comprova renderização e percurso observados nessas capturas, sem comprovar
+todas as etapas do roteiro (Kate, reset, redimensionamento e lint não reenviados
+nessa mensagem). O usuário avaliou o layout como insatisfatório.
+
+Diagnóstico: poucas colunas, células altas, descrições truncadas e ações isoladas
+criavam espaço excessivo e hierarquia fraca. A correção trata a composição,
+não apenas o tamanho dos ícones.
+
+| Elemento | Primeira grade | Ajuste preparado |
+| --- | --- | --- |
+| Ícone de aplicativo/grupo | 48 px | 32 px |
+| Largura alvo da célula | 160 px | 112 px |
+| Altura da célula | 164 px | 124 px |
+| Barra lateral | 190 px, botões elevados | 164 px, ItemDelegate com seleção e ícone de 16 px |
+| Descrição | Linha sempre visível, frequentemente cortada | Tooltip com nome e descrição |
+| Cabeçalho | Marca + rótulo técnico + botão elevado | Ícone de 28 px, subtítulo Aplicativos, atualização flat |
+| Rodapé inicial | Dois textos de diagnóstico | Uma indicação curta da restrição de abertura |
+
+A grade calcula colunas pela largura disponível; a previsão é de aproximadamente
+quatro colunas na janela das capturas, dependente da largura real da view,
+scrollbar e escala. Não se afirma renderização de quatro colunas sem nova captura.
+Os tokens são dimensões lógicas QML; nenhuma escala física foi forçada.
+
+Os nomes mantêm a fonte configurada no ambiente e até duas linhas. Descrições
+completas aparecem após hover de 600 ms. Status de abertura só fica visível
+após solicitação; falha de atualização continua sendo apresentada.
+Cores de texto e destaque vêm do tema. Sem paleta hardcoded, CSS ou assets novos.
+Entrar e Abrir Kate permanecem controles explícitos, agora flat e próximos ao
+conteúdo. A área de um card inteiro não foi convertida em ação de execução.
+
+Foram preservados os corpos dos cliques, as funções de catálogo, a checagem de ID,
+a única chamada trigger e a reconexão da view. Verificações locais compararam
+essas partes ao baseline e conferiram aritmética de colunas e whitespace.
+O novo uso de ItemDelegate/HoverHandler/ToolTip ainda requer lint e runtime Qt6.
+
+### Próxima validação
+
+Na branch feat/poc-03-native-grid, atualizar por fast-forward e abrir o pacote
+principal. Testar Desenvolvimento e Educação/Ciências, hover nos nomes longos,
+rolagem, seleção de categorias e uma janela redimensionada. Confirmar legibilidade,
+densidade, contraste do item selecionado e ausência de itens sobrepostos.
+Regressões de Kate e reset continuam úteis, sem ampliar a permissão de execução.
+
+Não há skill específica de design KDE entre as skills disponíveis nesta sessão.
+Não foi instalada skill externa, dependência visual nem ferramenta na workstation.
+A revisão usa os componentes nativos existentes; uma futura skill deverá ser
+avaliada quanto à adequação a QML/Plasma, sem presumir que regras para web se
+apliquem diretamente ao launcher.

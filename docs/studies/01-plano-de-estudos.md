@@ -247,3 +247,15 @@ verificados na workstation. A API privada segue provisória.
   Testar aritmética não substitui verificar renderização, escala e nomes longos.
 - Homologação do modelo e da lista experimental reduz risco, mas não valida
   automaticamente outra representação visual ou o popup no painel.
+
+### Revisão visual aplicada — PoC 03A
+
+- Densidade depende de colunas, altura de célula, espaço entre itens e hierarquia,
+  além do tamanho do ícone. A primeira grade renderizou, mas não atingiu a qualidade
+  visual esperada; teste funcional e avaliação de UX são critérios diferentes.
+- Informações secundárias extensas podem ir para tooltip; o nome permanece
+  disponível sem hover. Revisar depois acesso à descrição por teclado/leitor de tela.
+- ItemDelegate comunica seleção de categoria com menos ruído que botões elevados
+  repetidos. Contraste e dimensões devem ser confirmados com o tema/escala reais.
+- Não reduzir fontes para compensar geometria ruim. Ajustar primeiro composição
+  e espaços; comparar capturas antes de considerar o refinamento homologado.

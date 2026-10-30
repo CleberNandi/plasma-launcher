@@ -125,16 +125,16 @@ PlasmoidItem {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 16
-            spacing: 12
+            anchors.margins: 12
+            spacing: 8
 
             RowLayout {
                 Layout.fillWidth: true
 
                 Kirigami.Icon {
                     source: "user-identity"
-                    implicitWidth: 36
-                    implicitHeight: 36
+                    implicitWidth: 28
+                    implicitHeight: 28
                 }
 
                 ColumnLayout {
@@ -147,13 +147,15 @@ PlasmoidItem {
                     }
 
                     PlasmaComponents.Label {
-                        text: "PoC 03A — Catálogo nativo"
+                        text: "Aplicativos"
                         opacity: 0.7
                     }
                 }
 
                 PlasmaComponents.Button {
-                    text: "Atualizar catálogo"
+                    text: "Atualizar"
+                    flat: true
+                    icon.name: "view-refresh"
                     enabled: root.catalogReady
                     onClicked: {
                         root.catalogReady = false;
@@ -173,16 +175,16 @@ PlasmoidItem {
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 16
+                spacing: 12
 
                 ListView {
                     id: categoryList
-                    Layout.minimumWidth: 190
-                    Layout.preferredWidth: 190
-                    Layout.maximumWidth: 190
+                    Layout.minimumWidth: 164
+                    Layout.preferredWidth: 164
+                    Layout.maximumWidth: 164
                     Layout.fillHeight: true
                     clip: true
-                    spacing: 4
+                    spacing: 2
                     model: appsModel
                     enabled: root.catalogReady
                     boundsBehavior: Flickable.StopAtBounds
@@ -192,15 +194,33 @@ PlasmoidItem {
                         policy: QQC2.ScrollBar.AsNeeded
                     }
 
-                    delegate: PlasmaComponents.Button {
+                    delegate: QQC2.ItemDelegate {
+                        id: categoryDelegate
                         required property int index
                         required property var model
                         width: categoryList.width - categoryScrollBar.width - 4
+                        height: 32
                         text: String(model.display ?? "")
-                        checkable: true
-                        autoExclusive: true
-                        checked: root.selectedCategoryIndex === index
+                        highlighted: root.selectedCategoryIndex === index
                         onClicked: root.selectCategory(index, String(model.display ?? ""))
+
+                        contentItem: RowLayout {
+                            spacing: 8
+
+                            Kirigami.Icon {
+                                source: categoryDelegate.model.decoration
+                                implicitWidth: 16
+                                implicitHeight: 16
+                            }
+
+                            PlasmaComponents.Label {
+                                text: categoryDelegate.text
+                                color: categoryDelegate.highlighted
+                                    ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+                        }
                     }
                 }
 
@@ -215,6 +235,7 @@ PlasmoidItem {
 
                         PlasmaComponents.Button {
                             text: "Voltar"
+                            flat: true
                             enabled: root.catalogReady && root.subcategoryPath.length > 0
                             onClicked: root.leaveSubcategory()
                         }
@@ -238,9 +259,9 @@ PlasmoidItem {
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
                         readonly property int columnCount: Math.max(1,
-                            Math.floor((width - applicationScrollBar.width - 8) / 160))
+                            Math.floor((width - applicationScrollBar.width - 8) / 112))
                         cellWidth: Math.max(1, (width - applicationScrollBar.width - 8) / columnCount)
-                        cellHeight: 164
+                        cellHeight: 124
                         model: root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
                         // Reposicionamento pertence à view, não ao delegate destruído.
                         onModelChanged: applicationGrid.positionViewAtBeginning()
@@ -257,15 +278,22 @@ PlasmoidItem {
                             width: applicationGrid.cellWidth
                             height: applicationGrid.cellHeight
 
+                            HoverHandler { id: applicationHover }
+                            QQC2.ToolTip.visible: applicationHover.hovered
+                            QQC2.ToolTip.delay: 600
+                            QQC2.ToolTip.text: String(applicationDelegate.model.display ?? "")
+                                + (String(applicationDelegate.model.description ?? "").length > 0
+                                    ? "\n" + String(applicationDelegate.model.description) : "")
+
                             ColumnLayout {
                                 anchors.fill: parent
-                                anchors.margins: 8
-                                spacing: 4
+                                anchors.margins: 6
+                                spacing: 2
 
                                 Kirigami.Icon {
                                     source: applicationDelegate.model.decoration
-                                    implicitWidth: 48
-                                    implicitHeight: 48
+                                    implicitWidth: 32
+                                    implicitHeight: 32
                                     Layout.alignment: Qt.AlignHCenter
                                 }
 
@@ -278,19 +306,11 @@ PlasmoidItem {
                                     elide: Text.ElideRight
                                 }
 
-                                PlasmaComponents.Label {
-                                    text: String(applicationDelegate.model.description ?? "")
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignHCenter
-                                    elide: Text.ElideRight
-                                    opacity: 0.65
-                                    visible: text.length > 0
-                                }
-
                                 Item { Layout.fillHeight: true }
 
                                 PlasmaComponents.Button {
                                     text: "Entrar"
+                                    flat: true
                                     Layout.alignment: Qt.AlignHCenter
                                     visible: Boolean(applicationDelegate.model.hasChildren)
                                     enabled: visible && root.catalogReady
@@ -304,6 +324,7 @@ PlasmoidItem {
 
                                 PlasmaComponents.Button {
                                     text: "Abrir Kate"
+                                    flat: true
                                     Layout.alignment: Qt.AlignHCenter
                                     visible: root.isAllowedKate(applicationDelegate.model)
                                     enabled: visible && root.catalogReady
@@ -344,7 +365,8 @@ PlasmoidItem {
 
             PlasmaComponents.Label {
                 Layout.fillWidth: true
-                text: root.catalogStatus + " | Categorias: " + appsModel.count
+                text: root.catalogStatus.startsWith("Falha")
+                    ? root.catalogStatus : "Prévia: abertura disponível apenas para Kate."
                 wrapMode: Text.WordWrap
                 opacity: 0.7
             }
@@ -352,6 +374,7 @@ PlasmoidItem {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: root.launchStatus
+                visible: root.launchStatus !== "Nenhuma execução solicitada"
                 wrapMode: Text.WordWrap
             }
         }
