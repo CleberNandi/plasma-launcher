@@ -3,7 +3,7 @@
 **Versão:** 0.2
 **Stack:** KDE Plasma 6, Qt Quick 6, QML, JavaScript integrado ao QML  
 **Ambiente-alvo:** Arch Linux, KDE Plasma 6, sessão Wayland  
-**Status:** PoC 02 homologada no ambiente local; grade nativa 03A em homologação incremental; abertura geral 03B preparada
+**Status:** catálogo/grade nativos e abertura de múltiplos apps homologados no ambiente local; pesquisa 03C preparada
 
 ## Objetivo
 
@@ -273,3 +273,32 @@ verificados na workstation. A API privada segue provisória.
   abertura visual comprovada.
 - A restrição inicial ao Kate serviu à homologação controlada. Abertura geral é
   uma mudança funcional explícita com regressão local própria.
+
+## Aprendizagem aplicada — PoC 03C (homologação pendente)
+
+- Proxy preserva a relação com o modelo Qt; não é uma cópia do catálogo em array.
+  Seu índice é uma posição na lista filtrada. mapToSource converte para a linha
+  que a API trigger espera na origem.
+- filterRoleName resolve um role por nome, evitando gravar o número privado
+  de description no QML. O callback combina nome e descrição com texto literal.
+- Alterar uma variável usada pelo callback não reexecuta automaticamente a
+  filtragem; invalidar explicitamente quando a consulta mudar.
+- Bindings da origem devem ser invalidados no reset do catálogo. Índices antigos
+  deixam de representar a mesma aplicação quando entram/saem resultados.
+- Pesquisa de aplicativos dentro do menu e KRunner são fluxos distintos.
+  Esta implementação não consulta runners ou indexadores de arquivos.
+- Refinamento visual fica reservado para comparação de mockups e referências
+  do usuário, sem tratar a disposição provisória como decisão definitiva.
+
+## Aprendizagem aplicada — PoC 03D (homologação pendente)
+
+- Seleção e foco são estados diferentes: currentIndex escolhe a linha; activeFocus
+  determina quem recebe teclas. O destaque só aparece na grade que tem foco.
+- A view mantém seleção; delegates transitórios recebem um sinal e somente a linha
+  correspondente usa seus dados na ativação. Não persistir ponteiros de cards.
+- Uma nova consulta pode trocar o significado de um índice sem mudar a contagem.
+  Invalidar seleção na consulta e nos eventos estruturais do modelo.
+- KeyEvent.accepted evita propagação adicional da tecla; isAutoRepeat permite
+  bloquear Enter repetido sem impedir repetição de setas.
+- Separar teste da lógica de movimento do teste nativo de foco e entrega de teclas.
+  Uma função JavaScript correta não comprova interação Qt/Wayland.
