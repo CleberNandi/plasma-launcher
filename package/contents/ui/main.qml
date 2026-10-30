@@ -83,17 +83,13 @@ PlasmoidItem {
     property int selectedCategoryIndex: 0
     property string selectedCategoryName: "Aplicativos"
     property string launchStatus: "Nenhuma execução solicitada"
-    readonly property string allowedKateId: "applications:org.kde.kate.desktop"
-
-    function isAllowedKate(entry) {
-        return Boolean(entry)
-            && !Boolean(entry.isParent)
-            && !Boolean(entry.hasChildren)
-            && !Boolean(entry.isSeparator)
-            && !Boolean(entry.disabled)
-            && String(entry.favoriteId ?? "") === root.allowedKateId;
+    function isLaunchableEntry(entry) {
+        if (!entry || Boolean(entry.isParent) || Boolean(entry.hasChildren)
+            || Boolean(entry.isSeparator) || Boolean(entry.disabled))
+            return false;
+        // Aceitar apenas IDs de aplicações do catálogo, sem ações/fragmentos.
+        return /^applications:[^?#]+\.desktop$/.test(String(entry.favoriteId ?? ""));
     }
-
 
     function selectCategory(row, label) {
         if (!root.catalogReady || row < 0 || row >= appsModel.count)
@@ -109,7 +105,7 @@ PlasmoidItem {
         const currentModel = view ? view.model : null;
         if (!root.catalogReady || !currentModel || !entry
             || Boolean(entry.disabled) || Boolean(entry.isSeparator)
-            || row < 0 || row >= currentModel.count)
+            || !Number.isInteger(row) || row < 0 || row >= currentModel.count)
             return;
 
         if (Boolean(entry.hasChildren)) {
@@ -117,15 +113,16 @@ PlasmoidItem {
             return;
         }
 
-        // Limite da prévia: nomes/ícones de outros aplicativos não liberam execução.
-        if (!root.isAllowedKate(entry) || typeof currentModel.trigger !== "function")
+        if (!root.isLaunchableEntry(entry) || typeof currentModel.trigger !== "function")
             return;
 
+        // Capturar apresentação antes da chamada; o delegate pode ser destruído.
+        const applicationName = String(entry.display ?? "aplicativo");
         try {
             const result = currentModel.trigger(row, "", null);
             root.launchStatus = result
-                ? "Solicitação de abertura do Kate enviada ao KDE."
-                : "O KDE não aceitou a solicitação de abertura do Kate.";
+                ? "Solicitação de abertura de " + applicationName + " enviada ao KDE."
+                : "O KDE não aceitou a solicitação de abertura de " + applicationName + ".";
         } catch (error) {
             root.launchStatus = "Falha ao solicitar abertura pelo Kicker: " + String(error);
         }
@@ -288,7 +285,7 @@ PlasmoidItem {
                             required property int index
                             readonly property bool actionable:
                                 Boolean(applicationDelegate.model.hasChildren)
-                                    || root.isAllowedKate(applicationDelegate.model)
+                                    || root.isLaunchableEntry(applicationDelegate.model)
                             width: applicationGrid.cellWidth - 8
                             height: applicationGrid.cellHeight - 8
                             padding: 8
@@ -298,8 +295,8 @@ PlasmoidItem {
                             focusPolicy: applicationDelegate.actionable ? Qt.StrongFocus : Qt.NoFocus
                             Accessible.name: Boolean(applicationDelegate.model.hasChildren)
                                 ? "Abrir grupo " + applicationDelegate.text
-                                : root.isAllowedKate(applicationDelegate.model)
-                                    ? "Abrir Kate" : applicationDelegate.text
+                                : root.isLaunchableEntry(applicationDelegate.model)
+                                    ? "Abrir " + applicationDelegate.text : applicationDelegate.text
                             onClicked: root.activateEntry(applicationDelegate.GridView.view,
                                 applicationDelegate.index, applicationDelegate.model)
 
@@ -344,8 +341,8 @@ PlasmoidItem {
 
             PlasmaComponents.Label {
                 Layout.fillWidth: true
-                text: root.catalogStatus.startsWith("Falha")
-                    ? root.catalogStatus : "Prévia: abertura disponível apenas para Kate."
+                text: root.catalogStatus
+                visible: root.catalogStatus.startsWith("Falha")
                 wrapMode: Text.WordWrap
                 opacity: 0.7
             }

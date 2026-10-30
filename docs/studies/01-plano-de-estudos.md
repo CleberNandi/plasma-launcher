@@ -3,7 +3,7 @@
 **Versão:** 0.2
 **Stack:** KDE Plasma 6, Qt Quick 6, QML, JavaScript integrado ao QML  
 **Ambiente-alvo:** Arch Linux, KDE Plasma 6, sessão Wayland  
-**Status:** Checkpoint PoC 02: catálogo, Kate, favoritos e probe dinâmico validados no ambiente local; integração pendente
+**Status:** PoC 02 homologada no ambiente local; grade nativa 03A em homologação incremental; abertura geral 03B preparada
 
 ## Objetivo
 
@@ -259,3 +259,17 @@ verificados na workstation. A API privada segue provisória.
   repetidos. Contraste e dimensões devem ser confirmados com o tema/escala reais.
 - Não reduzir fontes para compensar geometria ruim. Ajustar primeiro composição
   e espaços; comparar capturas antes de considerar o refinamento homologado.
+
+## Aprendizagem aplicada — PoC 03B (homologação pendente)
+
+- Generalizar a execução significa ampliar as entradas elegíveis, não reconstruir
+  comandos. O índice continua pertencendo ao submodelo exibido e trigger recebe
+  ação vazia e argumento null.
+- ID applications:…desktop indica uma entrada candidata de aplicação neste fluxo.
+  Não autentica sua origem. IDs de ações/query e outros esquemas ficam fora deste
+  incremento; não executar texto de nome, descrição ou busca.
+- Capturar o nome antes da chamada nativa evita consultar um delegate que possa
+  ter desaparecido durante a operação. Status positivo relata solicitação, não
+  abertura visual comprovada.
+- A restrição inicial ao Kate serviu à homologação controlada. Abertura geral é
+  uma mudança funcional explícita com regressão local própria.

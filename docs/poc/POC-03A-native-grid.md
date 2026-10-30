@@ -1,7 +1,7 @@
 # PoC 03A — Catálogo nativo na grade principal
 
 **Data:** 30/10/2026.
-**Status:** grade compacta renderizada; clique no card do Kate confirmado em bfee9a4. Apresentação plana por categoria preparada; homologação KDE pendente.
+**Status:** apresentação plana de Educação confirmada por captura; clique do Kate confirmado após flat. Próximo incremento: abertura geral em POC-03B-application-launch.md.
 **Branch:** feat/poc-03-native-grid.
 **Base:** 73899697e76f8ce1a6152c7232455fc19f6b6b80, checkpoint da PoC 02.
 
@@ -261,3 +261,19 @@ e sem duplicação, mantendo as categorias principais na lateral. Verificar uma
 categoria mais cheia para observar se outras duplicações internas foram removidas.
 O clique do Kate já confirmado não precisa de repetição extensa; checagem curta
 continua útil pois índices podem mudar com a opção flat.
+
+## Homologação de flat recebida — 30/10/2026
+
+As três capturas enviadas mostram Ajuda, Desenvolvimento e Educação.
+Educação apresenta LibreOffice Math diretamente, uma única vez na grade visível,
+sem passagem por Ciências/Matemática. Categorias principais permanecem na lateral.
+O usuário confirmou que Kate continua abrindo e autorizou continuidade.
+
+O comportamento é compatível com a revisão 1ebafd0 preparada para essa rodada;
+o HEAD local não foi reenviado. Não se amplia essa evidência para todas as
+categorias ou para versões diferentes do KDE. Nenhum novo código de saída de
+qmllint foi fornecido nessa mensagem.
+
+Aceita a apresentação plana no caso observado. A abertura geral pelo clique
+fica tratada em [POC-03B-application-launch.md](POC-03B-application-launch.md),
+sem alterar o laboratório congelado da PoC 02.
