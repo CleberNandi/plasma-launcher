@@ -15,14 +15,19 @@ de preparação e testes, inclusive resultados parciais depois esclarecidos.
 | Layout experimental | Capturas validaram faixa de favoritos e rolagem |
 | Refresh explícito | Fluxo manual observado e sinais registrados |
 | Mudanças automáticas | Probe independente PASS: inclusão, rename/categoria e remoção por publicação atômica |
-| Subcategorias (02F.1) | Entrada/retorno implementados; homologação QML/KDE pendente |
+| Subcategorias (02F.1) | Entrada/retorno e correção de ciclo de vida homologados em 8a050ce; regressões restantes pendentes |
+| Escopo dos componentes | Bound preparado em 41d9424; novo lint e regressão nativa pendentes |
 
 Evidência automatizada e limites: [POC-02E-automated.md](POC-02E-automated.md).
 O PASS local foi reportado pelo executor na revisão 1774f8c; Work não executou KDE.
-Scripts Bash tiveram validação de sintaxe; não há resultado de qmllint.
+Scripts Bash tiveram validação de sintaxe. Qt6 qmllint 6.12.0 foi executado
+localmente em 3f016fc: imports/sintaxe sem erros reportados, com warnings de
+escopo e de propriedades no probe. Isso não equivale a lint limpo.
+O ajuste Bound altera apenas a interface experimental; resultado posterior ainda
+não medido. Ver [POC-02F-navigation.md](POC-02F-navigation.md).
 
 Pendências antes da integração ao launcher principal:
-- Homologar navegação hierárquica: [POC-02F-navigation.md](POC-02F-navigation.md).
+- Concluir regressões da navegação hierárquica e medir o lint após Bound: [POC-02F-navigation.md](POC-02F-navigation.md).
 - Identidade estável dos aplicativos, em vez de restringir execução por display.
 - Definição do client de favoritos, ordenação e atividades; sem migrar dados.
 - Revisão/compatibilidade da API privada e ciclos de vida em outras versões.
