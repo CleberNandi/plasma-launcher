@@ -368,3 +368,30 @@ Qualquer outra resposta encerra a rodada com limpeza, sem iniciar a fase seguint
 O intervalo registrado mede tempo até resposta humana, não latência do KDE.
 60 s é janela de observação, não SLA nem timeout implementado no script.
 Validação da revisão: bash -n PASS; execução KDE pendente.
+
+## Esclarecimento e evidências de inclusão/remoção — 30/10/2026
+
+Nova rodada encerrada na fase A como inconclusiva pelo usuário, com relato
+de mudança dos contadores. O critério do roteiro foi interpretado como
+espera pelo desaparecimento da entrada durante a fase A.
+
+Correção do critério: durante a pausa A, o arquivo existe e a entrada A deve
+permanecer em Desenvolvimento, inclusive depois de refresh manual.
+O desaparecimento só é esperado após remoção do arquivo (fase C ou limpeza).
+
+Captura antes da saída: entrada A visível em Desenvolvimento, refreshed/reset 2/2.
+Script informou Fixture removida ao encerrar.
+Usuário relatou que ZZ desapareceu somente após encerrar o script.
+Captura seguinte: refreshed/reset 3/3, lista ao final sem a entrada A.
+
+Evidência funcional de inclusão no catálogo e remoção após a limpeza.
+O relato não indica novo clique manual entre limpeza e desaparecimento;
+registrar como atualização compatível com detecção automática, sem alegar
+latência medida nem comprovação instrumentada da origem de cada sinal.
+Não há evidência de falha por a entrada permanecer enquanto o arquivo existia.
+O intervalo de 98 s é tempo até resposta humana, não tempo de refresh.
+
+A fase B (alteração do nome e migração de Development para Utility) não foi
+executada nesta rodada; permanece pendente. Não repetir inclusão/remoção
+apenas porque o usuário registrou a fase A como inconclusiva: separar o rótulo
+digitado dos fatos visuais e do ciclo de vida esperado do arquivo.
