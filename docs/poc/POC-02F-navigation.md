@@ -1,6 +1,6 @@
 # PoC 02F.1 — Navegação por subcategorias
 
-**Status:** entrada e retorno confirmados pelo usuário, com ReferenceError no handler; correção preparada, aguardando regressão local. Lint Qt6 anterior com warnings.
+**Status:** entrada/retorno e correção do ReferenceError homologados pelo usuário em 8a050ce; demais regressões e warnings de lint pendentes.
 **Data:** 30/10/2026.
 
 ## Incremento
@@ -205,3 +205,26 @@ Regressão curta: reabrir o pacote atualizado e repetir
 Educação → Ciências → Voltar → Matemática → Voltar, observando o terminal.
 Confirmar conteúdo/caminho, retorno e ausência do ReferenceError. Permanecem
 pendentes também reset com grupo aberto, troca de categoria, Kate e redimensionamento.
+
+## Regressão da correção confirmada — 30/10/2026
+
+O usuário sincronizou por fast-forward de 3f016fc para
+`8a050ce7aca4fa61627204b8906f6cc1f18a995d` e abriu o pacote experimental com:
+
+```bash
+plasmawindowed "$PWD/experiments/poc-02a/package"
+```
+
+Após o roteiro solicitado Educação → Ciências → Voltar → Matemática → Voltar,
+confirmou: “Deu certo. sem erros”. O trecho de terminal enviado mostra apenas
+`qml: 0` e `qml: undefined`, sem a ocorrência anterior de ReferenceError.
+
+Registrada como homologação manual do fluxo de entrada/retorno e da correção
+do acesso após a troca de modelo, no ambiente local informado. Não se atribui
+significado de falha ou sucesso às duas linhas genéricas de log; sua origem
+continua não determinada.
+
+Esta rodada não incluiu novo resultado de qmllint, nem confirmação específica
+de reset com grupo aberto, troca de categoria, Kate ou redimensionamento.
+Essas pendências permanecem abertas. Não é necessário repetir o fluxo corrigido
+sem nova alteração que justifique regressão. Nenhum merge autorizado ou realizado.
