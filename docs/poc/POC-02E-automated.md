@@ -82,3 +82,42 @@ Referências:
 - https://doc.qt.io/qt-6/qml-qtquick-repeater.html
 - https://doc.qt.io/qt-6/qml-qtqml-connections.html
 - https://specifications.freedesktop.org/desktop-entry/latest/recognized-keys.html
+
+## Homologação local reportada — 30/10/2026
+
+Fonte: relatório do Codex local fornecido pelo usuário nesta conversa.
+Revisão testada: 1774f8c192ccbbe37e2040428dcf5e76eb070190.
+Branch: feat/poc-02-kde-app-catalog; árvore limpa antes/depois.
+Viewer: plasmawindowed 1.0. Relatório original: /tmp/plasma-launcher-report.wnPnDD.
+Os arquivos brutos permanecem na workstation; não foram acessados pelo Work.
+
+| Fase | Resultado | a | b | refreshed |
+| --- | --- | --- | --- | --- |
+| baseline | PASS | [] | [] | 2 |
+| inclusion | PASS | ["Desenvolvimento"] | [] | 3 |
+| migration | PASS | [] | ["Utilitários"] | 4 |
+| removal | PASS | [] | [] | 5 |
+
+Todas as fases atingiram três snapshots completos consecutivos; EXIT=0.
+Contadores inserted/removed/changed permaneceram zero em todas as fases.
+Sem refresh manual, rebuild externo de cache ou correção de código na rodada.
+O executor reportou ausência de erros/warnings QML/Qt; viewer.log continha
+qml: 0 e 21 linhas de telemetria.
+Limpeza confirmada pelo executor: fixture e arquivos de staging ausentes,
+processo do probe encerrado. Nenhum favorito alterado pelo teste.
+
+Conclusão: inclusão, mudança de nome/categoria por publicação atômica e remoção
+automáticas homologadas no probe independente, no ambiente testado.
+Não constitui homologação integral da interface principal, navegação
+hierárquica, estabilidade entre versões ou reescrita direta do arquivo.
+A razão dos contadores dos submodelos zerados é hipótese compatível com
+reconstrução/reconexão; não foi provada apenas pelos snapshots.
+Não concluir que o teste manual anterior falhou por causa da escrita direta.
+
+O histórico enviado menciona uma execução inicial com exit code 1, sem seu
+relatório ou causa. O PASS acima corresponde à rodada wnPnDD; não atribuir
+sucesso à tentativa inicial nem inventar diagnóstico para ela.
+
+Próximo passo: revisão consolidada da PoC 02 e preparação de PR de checkpoint,
+com limitações explícitas e sem merge automático. Integração ao launcher
+principal será um incremento separado.
