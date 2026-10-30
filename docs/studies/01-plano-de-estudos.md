@@ -216,3 +216,17 @@ verificados na workstation. A API privada segue provisória.
   Os três delegates experimentais já declaram esses dados explicitamente.
 - O pragma foi preparado para validação Qt6 local. Redução de warnings e
   ausência de regressão visual precisam ser medidas, não inferidas.
+
+## Aprendizagem aplicada — PoC 02G.1 (homologação pendente)
+
+- `display` é um nome de apresentação, não uma identidade. Um mesmo nome pode
+  pertencer a desktop entries diferentes.
+- O role `favoriteId` do Kicker identifica a entrada no catálogo e pode ser lido
+  sem inicializar ou escrever no modelo de favoritos.
+- A restrição experimental usa igualdade exata com
+  `applications:org.kde.kate.desktop`, tanto na visibilidade quanto no clique.
+  Não se aceitam sufixos, ações, caminhos alternativos ou fallback pelo nome.
+- Um ID de catálogo não autentica o executável: sobreposições XDG e o conteúdo
+  de desktop entries continuam sendo responsabilidade da infraestrutura KDE.
+- O teste sintético verifica a decisão de permitir/bloquear; somente a execução
+  local valida o role real entregue pelo Kicker e a abertura da aplicação.

@@ -81,6 +81,16 @@ PlasmoidItem {
 
     property int selectedCategoryIndex: 0
     property string launchStatus: "Nenhuma execução solicitada"
+    readonly property string allowedKateId: "applications:org.kde.kate.desktop"
+
+    function isAllowedKate(entry) {
+        return Boolean(entry)
+            && !Boolean(entry.isParent)
+            && !Boolean(entry.hasChildren)
+            && !Boolean(entry.isSeparator)
+            && !Boolean(entry.disabled)
+            && String(entry.favoriteId ?? "") === root.allowedKateId;
+    }
 
     // Contexto persistido observado; não equivale necessariamente ao Kickoff 66.
     readonly property string favoritesClient: "org.kde.plasma.kickoff.favorites.instance-4"
@@ -114,7 +124,7 @@ PlasmoidItem {
             spacing: 12
 
             PlasmaComponents.Label {
-                text: "PoC 02F.1 — Navegação por subcategorias"
+                text: "PoC 02G.1 — Identidade do aplicativo"
                 font.bold: true
             }
 
@@ -355,6 +365,14 @@ PlasmoidItem {
 
                         }
 
+                        PlasmaComponents.Label {
+                            text: "ID: " + String(applicationDelegate.model.favoriteId ?? "(ausente)")
+                            visible: root.isAllowedKate(applicationDelegate.model)
+                                || String(applicationDelegate.model.display ?? "") === "Kate"
+                            Layout.maximumWidth: 200
+                            elide: Text.ElideMiddle
+                        }
+
                         PlasmaComponents.Button {
                             text: "Entrar"
                             visible: Boolean(applicationDelegate.model.hasChildren)
@@ -370,25 +388,25 @@ PlasmoidItem {
 
                         PlasmaComponents.Button {
                             text: "Abrir Kate"
-                            visible: !Boolean(applicationDelegate.model.hasChildren)
-                                && String(applicationDelegate.model.display ?? "") === "Kate"
+                            visible: root.isAllowedKate(applicationDelegate.model)
                             enabled: visible && root.catalogReady
                             onClicked: {
-                                const currentModel = applicationList.model;
+                                const currentView = applicationDelegate.ListView.view;
+                                const currentModel = currentView ? currentView.model : null;
                                 // O índice pertence ao submodelo exibido, não ao RootModel.
                                 if (!root.catalogReady
-                                    || Boolean(applicationDelegate.model.hasChildren)
-                                    || String(applicationDelegate.model.display ?? "") !== "Kate"
+                                    || !root.isAllowedKate(applicationDelegate.model)
                                     || !currentModel
                                     || typeof currentModel.trigger !== "function"
                                     || applicationDelegate.index < 0
                                     || applicationDelegate.index >= currentModel.count) {
-                                    root.launchStatus = "Modelo indisponível";
+                                    root.launchStatus = "Abertura bloqueada: identidade ou modelo indisponível";
                                     return;
                                 }
                                 try {
                                     const result = currentModel.trigger(applicationDelegate.index, "", null);
-                                    root.launchStatus = "Retorno de Kicker.trigger: " + String(result)
+                                    root.launchStatus = root.allowedKateId
+                                        + " | Retorno de Kicker.trigger: " + String(result)
                                         + "; confirme visualmente se Kate abriu";
                                 } catch (error) {
                                     root.launchStatus = "Falha ao solicitar abertura pelo Kicker: " + String(error);

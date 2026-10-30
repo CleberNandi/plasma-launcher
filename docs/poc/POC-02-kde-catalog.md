@@ -15,20 +15,22 @@ de preparação e testes, inclusive resultados parciais depois esclarecidos.
 | Layout experimental | Capturas validaram faixa de favoritos e rolagem |
 | Refresh explícito | Fluxo manual observado e sinais registrados |
 | Mudanças automáticas | Probe independente PASS: inclusão, rename/categoria e remoção por publicação atômica |
-| Subcategorias (02F.1) | Entrada/retorno e correção de ciclo de vida homologados em 8a050ce; regressões restantes pendentes |
-| Escopo dos componentes | Bound preparado em 41d9424; novo lint e regressão nativa pendentes |
+| Subcategorias (02F.1) | Entrada/retorno homologados em 8a050ce; roteiro de regressão confirmado de forma agregada em c263a32 |
+| Escopo dos componentes | Bound: comando Qt6 sem diagnósticos visíveis e confirmação funcional agregada em c263a32 |
+| Identidade do Kate (02G.1) | Restrição por favoriteId implementada; validação local pendente |
 
 Evidência automatizada e limites: [POC-02E-automated.md](POC-02E-automated.md).
 O PASS local foi reportado pelo executor na revisão 1774f8c; Work não executou KDE.
 Scripts Bash tiveram validação de sintaxe. Qt6 qmllint 6.12.0 foi executado
 localmente em 3f016fc: imports/sintaxe sem erros reportados, com warnings de
 escopo e de propriedades no probe. Isso não equivale a lint limpo.
-O ajuste Bound altera apenas a interface experimental; resultado posterior ainda
-não medido. Ver [POC-02F-navigation.md](POC-02F-navigation.md).
+O ajuste Bound altera apenas a interface experimental. Em c263a32, o usuário
+executou Qt6 qmllint sem diagnósticos visíveis no trecho enviado e confirmou o
+roteiro funcional de forma agregada; código de saída do lint não capturado. Ver [POC-02F-navigation.md](POC-02F-navigation.md).
 
 Pendências antes da integração ao launcher principal:
-- Concluir regressões da navegação hierárquica e medir o lint após Bound: [POC-02F-navigation.md](POC-02F-navigation.md).
-- Identidade estável dos aplicativos, em vez de restringir execução por display.
+- Detalhes de homologação e limites da navegação hierárquica/Bound: [POC-02F-navigation.md](POC-02F-navigation.md).
+- Homologar a restrição por favoriteId em [POC-02G-identity.md](POC-02G-identity.md), preparada para substituir a comparação por display.
 - Definição do client de favoritos, ordenação e atividades; sem migrar dados.
 - Revisão/compatibilidade da API privada e ciclos de vida em outras versões.
 - Explicar divergência de reescrita direta versus publicação atômica se necessário.

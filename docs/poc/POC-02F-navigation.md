@@ -1,6 +1,6 @@
 # PoC 02F.1 — Navegação por subcategorias
 
-**Status:** entrada/retorno e correção do ReferenceError homologados pelo usuário em 8a050ce; demais regressões e warnings de lint pendentes.
+**Status:** entrada/retorno homologados em 8a050ce; ajuste Bound e roteiro de regressão confirmados de forma agregada pelo usuário em c263a32. Resultado detalhado abaixo.
 **Data:** 30/10/2026.
 
 ## Incremento
@@ -290,3 +290,22 @@ os cliques só podem ser atestados por quem interagir com a janela:
 Não repetir o teste dinâmico com fixtures para este ajuste. Não modificar dados
 de favoritos nem dar como concluídas interações que o executor não consiga fazer.
 O merge permanece fora do escopo autorizado.
+
+## Retorno do ajuste Bound — 30/10/2026
+
+O terminal enviado confirma atualização até `c263a32820335358fb88a961bccc379a30f078be`,
+execução do qmllint Qt6 sobre a interface experimental e abertura em plasmawindowed.
+O usuário confirmou “tudo ok” após o roteiro solicitado de favoritos, navegação,
+atualização dentro de grupo e abertura explícita do Kate.
+
+Nenhum diagnóstico do linter aparece no trecho enviado. Não foi capturado o código
+de saída separado, portanto o registro é de invocação sem diagnósticos visíveis,
+não de um EXIT=0 medido. A saída do visualizador contém `qml: 0` e `qml: undefined`,
+sem os ReferenceErrors anteriores no trecho fornecido.
+A confirmação funcional é agregada, sem evidência individual nova para cada clique
+ou para redimensionamento. Os warnings históricos do pacote principal/probe não
+foram reavaliados e não estão cobertos por esse comando.
+
+Checkpoint 02F.1 aceito no ambiente local segundo o relato do usuário.
+A próxima mudança de comportamento, identificação do Kate pelo role favoriteId,
+é tratada separadamente em [POC-02G-identity.md](POC-02G-identity.md).
