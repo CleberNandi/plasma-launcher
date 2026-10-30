@@ -305,3 +305,43 @@ e reabertura da sessão não foram confirmadas.
 A atualização automática por inclusão, alteração ou remoção de uma entrada
 .desktop ainda não foi testada. Próximo passo: PoC 02E.2 com fixture temporária
 reversível, sem instalação de aplicativos nem alteração de favoritos.
+
+## PoC 02E.2 — Harness interativo publicado
+
+Script: experiments/poc-02a/scripts/poc-02e2-catalog.sh.
+Executar com bash como usuário comum, em terminal interativo, com a PoC aberta.
+
+O script cria um arquivo exclusivo com mktemp em XDG_DATA_HOME/applications
+(fallback ~/.local/share/applications), sem criar o diretório se ausente.
+Fase A: nome ZZ Plasma Launcher PoC 02E2 A, categoria Development.
+Fase B: mesmo arquivo, nome terminado em B, categoria Utility.
+Fase C: remoção. Não executa a entrada (Exec=/usr/bin/true), não altera favoritos,
+não instala software, não chama cache builder e não reinicia Plasma.
+
+Em cada fase, aguardar aproximadamente 10 segundos, observar antes de clicar
+Atualizar catálogo e registrar contadores/resultado espontâneo. Se precisar
+do botão, registrar esse resultado separadamente. Ausência de atualização
+na janela observada é um resultado, não comprova falha definitiva do watcher.
+Cada refresh pode voltar à primeira categoria; navegar à categoria indicada.
+
+O script pausa para observações e as imprime no terminal; não cria relatório.
+Ctrl+C ou saída normal removem a fixture se seu hash corresponder ao esperado.
+Se detectar conteúdo externo, preserva o arquivo e informa seu caminho.
+A proteção por hash evita exclusão acidental no uso normal, mas não é defesa
+contra processo concorrente malicioso. SIGKILL/queda de energia impedem trap;
+nesse caso inspecionar o caminho impresso antes de remover a fixture manualmente.
+Não executar duas cópias simultâneas (os nomes visuais se repetem).
+
+Validação no Work: bash -n PASS; recusa de execução como root observada.
+Fluxo interativo de escrita/limpeza e integração KDE: NOT RUN neste ambiente.
+Homologação na workstation pendente; não afirmar teste dinâmico concluído.
+
+Comandos em terminais separados, a partir da raiz do repositório:
+```bash
+plasmawindowed "$PWD/experiments/poc-02a/package"
+```
+```bash
+bash experiments/poc-02a/scripts/poc-02e2-catalog.sh
+```
+
+Referência de formato: https://specifications.freedesktop.org/desktop-entry/latest/recognized-keys.html
