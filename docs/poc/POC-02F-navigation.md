@@ -1,6 +1,6 @@
 # PoC 02F.1 — Navegação por subcategorias
 
-**Status:** implementação preparada; homologação QML/KDE pendente.
+**Status:** homologação parcial: entrada em subcategorias comprovada por capturas; demais interações pendentes. Lint Qt6 executado com warnings.
 **Data:** 30/10/2026.
 
 ## Incremento
@@ -91,3 +91,71 @@ visual com base somente na análise do código. Não fazer merge.
 
 O runner 02E continua útil para regressão do catálogo, mas não aciona os novos
 botões. Não é necessário repetir fixtures para validar somente entrada/retorno.
+
+## Evidência local recebida — 30/10/2026
+
+Revisão informada pelo executor local: `3f016fc739825478eb2e35adbb15db683d018df1`,
+branch `feat/poc-02-kde-app-catalog`. Árvore limpa antes e depois, sem erros de
+`git diff --check` e sem merge, conforme relatório recebido. Work não executou
+essas verificações na workstation nem acessou os logs brutos.
+
+### Verificação estática reportada
+
+O executor identificou `/usr/bin/qmllint` 1.0 (Qt5) e utilizou o binário Qt6:
+
+```bash
+/usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml \
+  experiments/poc-02a/package/contents/ui/main.qml \
+  package/contents/ui/main.qml \
+  experiments/poc-02a/catalog-probe/package/contents/ui/main.qml
+```
+
+Versão reportada: 6.12.0. Imports resolvidos, sem diagnósticos de import,
+tipo não resolvido ou sintaxe no resumo fornecido.
+
+| Arquivo | Warnings reportados |
+| --- | --- |
+| Interface experimental | 51 `unqualified` |
+| Pacote principal | 5 `unqualified` |
+| Probe de catálogo | 4 `unqualified` e 7 `missing-property` |
+
+O relatório informa código de saída 0 na execução resumida e `success: false`
+no JSON por warnings; também menciona uma execução anterior com saída 1.
+Os resultados referem-se a invocações distintas. Não classificar o conjunto como
+lint limpo nem descartar warnings com base somente no código de saída.
+
+Os acessos entre componentes precisam de revisão de escopo. Avaliar
+`pragma ComponentBehavior: Bound` em incremento próprio, com verificação de
+delegates e teste nativo; não adicionar apenas para ocultar diagnósticos.
+No probe, o retorno estaticamente tipado como QQuickItem de `itemAt()` não
+expõe ao linter as propriedades específicas do delegate. Isso não comprova
+falha de execução nem dispensa revisão de tipos.
+
+### Evidência visual enviada pelo usuário
+
+Três capturas mostram a interface 02F.1:
+
+- Educação com os grupos Ciências e Matemática e seus botões Entrar.
+- Caminho Ciências e entrada LibreOffice Math com ícone e descrição.
+- Caminho Matemática e entrada LibreOffice Math com ícone e descrição.
+- Nas três capturas: dez categorias, `refreshed: 1`, `resets: 1` e
+  “Nenhuma execução solicitada”.
+
+Essas imagens comprovam apresentação dos grupos e entrada nos dois submodelos.
+A presença de LibreOffice Math em ambos não constitui erro por si só:
+a PoC apresenta o conteúdo recebido do catálogo, sem deduplicar entre grupos.
+Não foi comparada a classificação desse aplicativo com o menu nativo.
+
+O executor CLI deixou interação visual pendente; as capturas do usuário
+acrescentam evidência independente. Não comprovam isoladamente clique em Voltar,
+limpeza ao trocar categoria, reset enquanto dentro do grupo, redimensionamento,
+ausência de erros no terminal ou abertura do Kate nesta revisão.
+A validação anterior do Kate continua histórica, sem substituir a regressão 02F.1.
+
+### Pendências para encerrar 02F.1
+
+- Confirmar retorno via Voltar e limpeza ao trocar de categoria.
+- Confirmar atualização com grupo aberto, sem erro QML ou referência inválida.
+- Confirmar regressão do clique explícito no Kate e navegação sem aberturas.
+- Verificar redimensionamento e acesso aos controles.
+- Revisar os warnings estáticos sem alterar o pacote principal neste incremento.
