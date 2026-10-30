@@ -1,7 +1,7 @@
 # PoC 02G.1 — Identidade do aplicativo
 
 **Data:** 30/10/2026.
-**Status:** implementação e testes lógicos preparados; homologação KDE pendente.
+**Status:** ID aceito e retorno true do Kicker comprovados em b878a9a; confirmação visual da abertura pendente.
 **Baseline:** c263a32, com retorno funcional agregado positivo para Bound.
 
 ## Comportamento
@@ -82,3 +82,31 @@ Se o botão desaparecer no Kate, não flexibilizar a condição pelo nome:
 registrar o ID mostrado e o terminal para avaliar a diferença.
 Não criar desktop entries falsas nem modificar o menu para este teste.
 Sem novas fixtures e sem merge.
+
+## Evidência recebida — 30/10/2026
+
+O terminal confirma atualização por fast-forward de c263a32 para
+`b878a9a337f4b5abe11fabee4b48e81d0c71b5bd`. A captura identifica a PoC 02G.1
+e mostra, em Desenvolvimento:
+
+- Kate com o botão Abrir Kate e rótulo de ID parcialmente elidido.
+- Status completo `applications:org.kde.kate.desktop | Retorno de Kicker.trigger: true`.
+- Dez categorias, refreshed 1 e resets 1.
+- Outras linhas visíveis sem o botão Abrir Kate.
+
+Na implementação dessa revisão, a chamada trigger exige novamente o ID exato
+antes de executar. O status observado é, portanto, evidência de aceitação da
+identidade esperada pelo guard e do retorno true do Kicker.
+Não é um dump independente do role: o status exibe a constante conferida,
+e o rótulo do role está parcialmente elidido na captura.
+
+O trecho do terminal contém apenas `qml: 0` e `qml: undefined`, sem
+ReferenceError ou outro diagnóstico explícito. Não há saída individual de lint
+nem código de saída nessa mensagem; não se registra EXIT=0 medido.
+A origem das duas linhas genéricas permanece indeterminada.
+
+A mensagem não confirma textualmente que a janela do Kate abriu e a captura
+mostra apenas o launcher. Confirmação visual de abertura após o clique permanece
+pendente; o retorno true não substitui essa evidência.
+Os casos negativos de IDs ausentes/diferentes continuam cobertos apenas por
+testes lógicos sintéticos, sem criar desktop entries artificiais na workstation.
