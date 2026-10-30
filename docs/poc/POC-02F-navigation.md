@@ -1,6 +1,6 @@
 # PoC 02F.1 — Navegação por subcategorias
 
-**Status:** homologação parcial: entrada em subcategorias comprovada por capturas; demais interações pendentes. Lint Qt6 executado com warnings.
+**Status:** entrada e retorno confirmados pelo usuário, com ReferenceError no handler; correção preparada, aguardando regressão local. Lint Qt6 anterior com warnings.
 **Data:** 30/10/2026.
 
 ## Incremento
@@ -159,3 +159,49 @@ A validação anterior do Kate continua histórica, sem substituir a regressão 
 - Confirmar regressão do clique explícito no Kate e navegação sem aberturas.
 - Verificar redimensionamento e acesso aos controles.
 - Revisar os warnings estáticos sem alterar o pacote principal neste incremento.
+
+## Retorno funcional e correção de ciclo de vida — 30/10/2026
+
+O usuário confirmou entrada em Educação → Ciências, retorno e entrada em
+Matemática. O terminal registrou três ocorrências de:
+
+```text
+main.qml:361: ReferenceError: applicationList is not defined
+```
+
+Também foi enviada a linha `qml: undefined`, cuja origem não foi determinada.
+O resultado é funcional parcial com erro, não homologação sem diagnósticos.
+O HEAD da rodada não foi reenviado; a linha corresponde ao handler introduzido
+em 3f016fc, cujo código não mudou no commit documental be68d3c.
+
+A linha problemática reposicionava a lista **depois** de
+`enterSubcategory()` mudar o binding do modelo. A navegação já tinha ocorrido.
+A troca do modelo pode destruir o delegate e invalidar seu contexto de execução;
+essa é a explicação adotada para o acesso falhar depois da transição, embora
+não tenha sido reproduzida com instrumentação nativa no Work.
+
+Correção mínima:
+
+- Obter a view associada por `applicationDelegate.ListView.view` antes da troca
+  e passar seu modelo à função.
+- Encerrar o handler após navegar, sem consultar IDs do delegate novamente.
+- Reposicionar em `onModelChanged` do próprio ListView, inclusive no retorno.
+- Não alterar os roles, favoritos, trigger do Kate ou pacote principal.
+
+Referência: [Qt — ListView](https://doc.qt.io/qt-6/qml-qtquick-listview.html),
+seções sobre delegates e a propriedade anexada `view`. A documentação alerta
+que delegates podem ser destruídos e descreve o acesso à view no objeto raiz
+do delegate.
+
+No Work, um teste do handler com delegate simulado que rejeita acessos após a
+mutação passou; também foi verificado que o único reposicionamento restante está
+no handler da view e que o arquivo não contém whitespace novo.
+Esse teste verifica a ordem dos acessos, não reproduz o engine QML.
+Não foi executado qmllint nem runtime KDE nesta correção.
+Os warnings de escopo registrados anteriormente continuam pendentes; não foi
+adicionado `ComponentBehavior: Bound` nem feita limpeza geral de lint.
+
+Regressão curta: reabrir o pacote atualizado e repetir
+Educação → Ciências → Voltar → Matemática → Voltar, observando o terminal.
+Confirmar conteúdo/caminho, retorno e ausência do ReferenceError. Permanecem
+pendentes também reset com grupo aberto, troca de categoria, Kate e redimensionamento.

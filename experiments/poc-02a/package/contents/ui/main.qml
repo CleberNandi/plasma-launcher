@@ -246,7 +246,6 @@ PlasmoidItem {
                     enabled: root.catalogReady && root.subcategoryPath.length > 0
                     onClicked: {
                         root.leaveSubcategory();
-                        applicationList.positionViewAtBeginning();
                     }
                 }
 
@@ -307,6 +306,9 @@ PlasmoidItem {
                     spacing: 4
                     // A revisão também invalida o binding quando a contagem não muda.
                     model: root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
+                    // A troca de modelo pode destruir o delegate que iniciou a navegação.
+                    // Reposicionar aqui, no objeto que continua vivo, não após o clique.
+                    onModelChanged: applicationList.positionViewAtBeginning()
                     boundsBehavior: Flickable.StopAtBounds
 
                     QQC2.ScrollBar.vertical: QQC2.ScrollBar {
@@ -356,9 +358,11 @@ PlasmoidItem {
                             visible: Boolean(applicationDelegate.model.hasChildren)
                             enabled: visible && root.catalogReady
                             onClicked: {
-                                root.enterSubcategory(applicationList.model, applicationDelegate.index,
+                                const currentView = applicationDelegate.ListView.view;
+                                root.enterSubcategory(currentView ? currentView.model : null,
+                                    applicationDelegate.index,
                                     String(applicationDelegate.model.display ?? ""));
-                                applicationList.positionViewAtBeginning();
+                                // Não acessar IDs/contexto do delegate após trocar o modelo.
                             }
                         }
 
