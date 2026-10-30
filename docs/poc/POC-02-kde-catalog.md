@@ -280,3 +280,28 @@ por este commit. Atualização dinâmica permanece não homologada.
 - https://doc.qt.io/qt-6/qml-qtqml-connections.html
 - https://doc.qt.io/qt-6/qml-qtqml-qt.html#callLater-method
 - https://doc.qt.io/qt-6/qabstractitemmodel.html#modelAboutToBeReset
+
+## Evidência funcional 02E.1 — 30/10/2026
+
+Revisão disponibilizada para homologação: 3c3d7c9.
+Capturas e confirmação manual fornecidas pelo usuário:
+
+- Dez categorias mantidas nas três capturas.
+- Contadores refreshed/resets observados em 1/1, 2/2 e 3/3.
+  Essa sequência não comprova relação universal de um reset por refresh.
+- Status Sinal refreshed recebido; seleção reiniciada apresentado.
+- Primeira categoria (Ajuda) e seus aplicativos apresentados após refresh.
+- Navegação posterior para Desenvolvimento demonstrada.
+- Quatro favoritos renderizados junto ao catálogo na captura final.
+- Usuário confirmou que Kate abriu no teste desta rodada.
+
+Homologação funcional do fluxo observado de refresh e navegação pós-refresh.
+A captura final mostra os favoritos carregados, mas não determina sozinha a
+ordem entre o carregamento deles e o último refresh. Persistência dos favoritos
+através de refresh após sua inicialização permanece sem confirmação explícita.
+Ausência de erros QML no terminal, execução completa das repetições do roteiro
+e reabertura da sessão não foram confirmadas.
+
+A atualização automática por inclusão, alteração ou remoção de uma entrada
+.desktop ainda não foi testada. Próximo passo: PoC 02E.2 com fixture temporária
+reversível, sem instalação de aplicativos nem alteração de favoritos.
