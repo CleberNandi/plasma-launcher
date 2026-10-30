@@ -3,7 +3,7 @@
 **Versão:** 0.2
 **Stack:** KDE Plasma 6, Qt Quick 6, QML, JavaScript integrado ao QML  
 **Ambiente-alvo:** Arch Linux, KDE Plasma 6, sessão Wayland  
-**Status:** PoC 02C.2 e leitura/apresentação 02D.1 homologadas funcionalmente; layout e ordenação pendentes
+**Status:** Checkpoint PoC 02: catálogo, Kate, favoritos e probe dinâmico validados no ambiente local; integração pendente
 
 ## Objetivo
 
@@ -136,7 +136,7 @@ Evitar escrever anotações extensas que apenas repetem a documentação oficial
 
 ## Próxima ação
 
-Homologar a PoC 02E.1: refresh explícito, sinais do modelo e reconexão dos submodelos. O layout tem evidência visual registrada; ordenação de favoritos e atualização dinâmica continuam pendentes.
+Revisar o checkpoint PoC 02 antes de integração. Priorizar subcategorias, identidade estável dos aplicativos e definição do client/ordem dos favoritos. O probe de mudanças automáticas passou na rodada local de 30/10/2026; consultar `docs/poc/POC-02E-automated.md` para evidências e limites.
 
 ## Aprendizagem aplicada — PoC 02C
 
