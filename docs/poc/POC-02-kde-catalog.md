@@ -15,13 +15,14 @@ de preparação e testes, inclusive resultados parciais depois esclarecidos.
 | Layout experimental | Capturas validaram faixa de favoritos e rolagem |
 | Refresh explícito | Fluxo manual observado e sinais registrados |
 | Mudanças automáticas | Probe independente PASS: inclusão, rename/categoria e remoção por publicação atômica |
+| Subcategorias (02F.1) | Entrada/retorno implementados; homologação QML/KDE pendente |
 
 Evidência automatizada e limites: [POC-02E-automated.md](POC-02E-automated.md).
 O PASS local foi reportado pelo executor na revisão 1774f8c; Work não executou KDE.
 Scripts Bash tiveram validação de sintaxe; não há resultado de qmllint.
 
 Pendências antes da integração ao launcher principal:
-- Navegação hierárquica (Educação contém subcategorias).
+- Homologar navegação hierárquica: [POC-02F-navigation.md](POC-02F-navigation.md).
 - Identidade estável dos aplicativos, em vez de restringir execução por display.
 - Definição do client de favoritos, ordenação e atividades; sem migrar dados.
 - Revisão/compatibilidade da API privada e ciclos de vida em outras versões.
@@ -445,3 +446,12 @@ que condicionavam avanço ao sinal ficam substituídas por este critério.
 Nenhuma nova repetição de inclusão/remoção é exigida agora.
 Fase B permanece pendente. Execução e lint QML não realizados nesta alteração
 de roteiro; código do plasmoid não alterado.
+
+## PoC 02F.1 — Incremento preparado em 30/10/2026
+
+Navegação de grupos via `hasChildren` e `modelForRow`, com botão Entrar, retorno
+por nível e descarte do caminho ao trocar categoria ou reconstruir o RootModel.
+A execução continua restrita ao Kate e não é acionada pela navegação.
+Testes da lógica JavaScript passaram com modelos sintéticos no Work; nenhum
+resultado nativo novo foi inferido. Roteiro e limites em
+[POC-02F-navigation.md](POC-02F-navigation.md).

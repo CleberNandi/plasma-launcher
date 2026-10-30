@@ -17,6 +17,7 @@ PlasmoidItem {
 
     function finishCatalogRefresh() {
         // Índices são posições: após reconstrução, voltar ao primeiro grupo.
+        root.subcategoryPath = [];
         root.selectedCategoryIndex = 0;
         root.catalogReady = true;
     }
@@ -26,6 +27,7 @@ PlasmoidItem {
 
         function onModelAboutToBeReset() {
             root.catalogReady = false;
+            root.subcategoryPath = [];
             root.launchStatus = "Nenhuma execução solicitada";
         }
 
@@ -36,11 +38,43 @@ PlasmoidItem {
 
         function onRefreshed() {
             root.catalogReady = false;
+            root.subcategoryPath = [];
             root.catalogRevision += 1;
             root.catalogStatus = "Sinal refreshed recebido; seleção reiniciada";
             root.launchStatus = "Nenhuma execução solicitada";
             Qt.callLater(root.finishCatalogRefresh);
         }
+    }
+
+    // Caminho posicional válido somente até a próxima reconstrução.
+    property var subcategoryPath: []
+
+    function selectedApplicationModel() {
+        if (!root.catalogReady || root.selectedCategoryIndex < 0
+            || root.selectedCategoryIndex >= appsModel.count)
+            return null;
+        let current = appsModel.modelForRow(root.selectedCategoryIndex);
+        for (const step of root.subcategoryPath) {
+            if (!current || step.row < 0 || step.row >= current.count)
+                return null;
+            current = current.modelForRow(step.row);
+        }
+        return current;
+    }
+
+    function enterSubcategory(current, row, label) {
+        if (!root.catalogReady || !current || row < 0 || row >= current.count)
+            return;
+        const child = current.modelForRow(row);
+        if (!child)
+            return;
+        root.subcategoryPath = root.subcategoryPath.concat([{row: row, label: label}]);
+        root.launchStatus = "Nenhuma execução solicitada";
+    }
+
+    function leaveSubcategory() {
+        root.subcategoryPath = root.subcategoryPath.slice(0, -1);
+        root.launchStatus = "Nenhuma execução solicitada";
     }
 
     property int selectedCategoryIndex: 0
@@ -78,7 +112,7 @@ PlasmoidItem {
             spacing: 12
 
             PlasmaComponents.Label {
-                text: "PoC 02E.1 — Atualização do catálogo"
+                text: "PoC 02F.1 — Navegação por subcategorias"
                 font.bold: true
             }
 
@@ -206,6 +240,27 @@ PlasmoidItem {
 
             RowLayout {
                 Layout.fillWidth: true
+
+                PlasmaComponents.Button {
+                    text: "Voltar"
+                    enabled: root.catalogReady && root.subcategoryPath.length > 0
+                    onClicked: {
+                        root.leaveSubcategory();
+                        applicationList.positionViewAtBeginning();
+                    }
+                }
+
+                PlasmaComponents.Label {
+                    text: root.subcategoryPath.length > 0
+                        ? root.subcategoryPath.map(step => step.label).join(" / ")
+                        : "Selecione uma categoria; use Entrar para abrir subcategorias"
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 12
 
@@ -234,6 +289,7 @@ PlasmoidItem {
                         width: categoryList.width - categoryScrollBar.width - 4
                         text: String(model.display ?? "")
                         onClicked: {
+                            root.subcategoryPath = [];
                             root.selectedCategoryIndex = index;
                             root.launchStatus = "Nenhuma execução solicitada";
                         }
@@ -249,10 +305,8 @@ PlasmoidItem {
                     Layout.maximumWidth: Number.POSITIVE_INFINITY
                     clip: true
                     spacing: 4
-                    model: root.catalogReady && root.catalogRevision >= 0
-                        && root.selectedCategoryIndex >= 0
-                        && root.selectedCategoryIndex < appsModel.count
-                        ? appsModel.modelForRow(root.selectedCategoryIndex) : null
+                    // A revisão também invalida o binding quando a contagem não muda.
+                    model: root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
                     boundsBehavior: Flickable.StopAtBounds
 
                     QQC2.ScrollBar.vertical: QQC2.ScrollBar {
@@ -298,13 +352,26 @@ PlasmoidItem {
                         }
 
                         PlasmaComponents.Button {
+                            text: "Entrar"
+                            visible: Boolean(applicationDelegate.model.hasChildren)
+                            enabled: visible && root.catalogReady
+                            onClicked: {
+                                root.enterSubcategory(applicationList.model, applicationDelegate.index,
+                                    String(applicationDelegate.model.display ?? ""));
+                                applicationList.positionViewAtBeginning();
+                            }
+                        }
+
+                        PlasmaComponents.Button {
                             text: "Abrir Kate"
-                            visible: String(applicationDelegate.model.display ?? "") === "Kate"
+                            visible: !Boolean(applicationDelegate.model.hasChildren)
+                                && String(applicationDelegate.model.display ?? "") === "Kate"
                             enabled: visible && root.catalogReady
                             onClicked: {
                                 const currentModel = applicationList.model;
                                 // O índice pertence ao submodelo exibido, não ao RootModel.
                                 if (!root.catalogReady
+                                    || Boolean(applicationDelegate.model.hasChildren)
                                     || String(applicationDelegate.model.display ?? "") !== "Kate"
                                     || !currentModel
                                     || typeof currentModel.trigger !== "function"

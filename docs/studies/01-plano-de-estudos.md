@@ -136,7 +136,7 @@ Evitar escrever anotações extensas que apenas repetem a documentação oficial
 
 ## Próxima ação
 
-Revisar o checkpoint PoC 02 antes de integração. Priorizar subcategorias, identidade estável dos aplicativos e definição do client/ordem dos favoritos. O probe de mudanças automáticas passou na rodada local de 30/10/2026; consultar `docs/poc/POC-02E-automated.md` para evidências e limites.
+Revisar o checkpoint PoC 02 antes de integração. Homologar a navegação por subcategorias preparada na PoC 02F.1 (`docs/poc/POC-02F-navigation.md`); depois validar identidade estável dos aplicativos e definição do client/ordem dos favoritos. O probe de mudanças automáticas passou na rodada local de 30/10/2026; consultar `docs/poc/POC-02E-automated.md` para evidências e limites.
 
 ## Aprendizagem aplicada — PoC 02C
 
@@ -188,3 +188,18 @@ verificados na workstation. A API privada segue provisória.
   outra decisão, ainda não implementada.
 - Contadores são evidência de sinais recebidos. Refresh manual bem-sucedido
   não comprova detecção automática de mudanças nos arquivos .desktop.
+
+## Aprendizagem aplicada — PoC 02F.1 (homologação pendente)
+
+- Uma linha com `hasChildren` representa um grupo navegável; seus filhos vêm de
+  `modelForRow(index)` no modelo desse nível.
+- O caminho é uma sequência de índices locais, não uma lista de IDs persistentes.
+  Nomes entram apenas no rótulo visual.
+- Atribuir um novo array à propriedade QML torna a mudança de caminho observável
+  pelo binding do modelo exibido.
+- Ao voltar, retira-se o último passo; ao trocar categoria ou reconstruir o
+  catálogo, descarta-se o caminho inteiro.
+- IDs dentro de um componente têm escopo próprio: handlers da representação
+  passam o modelo à função externa, em vez de depender de IDs internos.
+- Teste JavaScript com modelo sintético não comprova renderização nem sinalização
+  do modelo Qt. A homologação local está descrita na PoC 02F.1.
