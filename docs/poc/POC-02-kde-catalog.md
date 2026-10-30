@@ -17,7 +17,7 @@ de preparação e testes, inclusive resultados parciais depois esclarecidos.
 | Mudanças automáticas | Probe independente PASS: inclusão, rename/categoria e remoção por publicação atômica |
 | Subcategorias (02F.1) | Entrada/retorno homologados em 8a050ce; roteiro de regressão confirmado de forma agregada em c263a32 |
 | Escopo dos componentes | Bound: comando Qt6 sem diagnósticos visíveis e confirmação funcional agregada em c263a32 |
-| Identidade do Kate (02G.1) | Restrição por favoriteId implementada; validação local pendente |
+| Identidade do Kate (02G.1) | Caminho positivo homologado em b878a9a: ID exato, trigger true e abertura confirmada |
 
 Evidência automatizada e limites: [POC-02E-automated.md](POC-02E-automated.md).
 O PASS local foi reportado pelo executor na revisão 1774f8c; Work não executou KDE.
@@ -30,7 +30,7 @@ roteiro funcional de forma agregada; código de saída do lint não capturado. V
 
 Pendências antes da integração ao launcher principal:
 - Detalhes de homologação e limites da navegação hierárquica/Bound: [POC-02F-navigation.md](POC-02F-navigation.md).
-- Homologar a restrição por favoriteId em [POC-02G-identity.md](POC-02G-identity.md), preparada para substituir a comparação por display.
+- Planejar integração gradual com a restrição por favoriteId homologada em [POC-02G-identity.md](POC-02G-identity.md); casos negativos nativos e outros empacotamentos ainda não exercitados.
 - Definição do client de favoritos, ordenação e atividades; sem migrar dados.
 - Revisão/compatibilidade da API privada e ciclos de vida em outras versões.
 - Explicar divergência de reescrita direta versus publicação atômica se necessário.
