@@ -45,14 +45,20 @@ EOF
     expected=${expected%% *}
 }
 observe() {
-    local note
+    local mode note started=$SECONDS
     printf '\n%s\n' "$1"
-    printf '%s\n' 'Observe por cerca de 10 s SEM atualizar catálogo/cache.'
-    printf '%s\n' 'Anote: apareceu/mudou/sumiu, refreshed e resets.'
-    printf '%s\n' 'Se falhar: clique Atualizar catálogo e registre separadamente.'
-    printf '%s\n' 'Se ainda falhar, não reconstrua cache agora: relate o resultado.'
-    read -r -p 'Digite sua observação e Enter para avançar: ' note
-    printf 'OBSERVAÇÃO: %s\n' "$note"
+    printf '%s\n' 'Aguarde até 60 s sem atualizar catálogo/cache.'
+    printf '%s\n' 'Após refresh, volte à categoria indicada e procure a entrada no FINAL da lista.'
+    printf '%s\n' 'Não basta ver o contador mudar: confirme nome/categoria/ausência da entrada.'
+    printf '%s\n' 'Capture a tela com o resultado e os contadores antes de avançar.'
+    printf '%s\n' 'Se não concluir em 60 s, não clique refresh: registre inconclusivo.'
+    read -r -p 'Digite auto se confirmou visualmente, ou inconclusivo para encerrar: ' mode
+    read -r -p 'Detalhes (conteúdo observado e contadores): ' note
+    printf 'OBSERVAÇÃO: modo=%s; intervalo até resposta=%ss; %s\n' "$mode" "$((SECONDS - started))" "$note"
+    if [[ "$mode" != auto ]]; then
+        printf '%s\n' 'Rodada interrompida. A limpeza pode gerar outro refresh; não atribua esse evento à fase interrompida.'
+        exit 0
+    fi
 }
 printf 'Arquivo temporário: %s\n' "$fixture"
 printf '%s\n' 'Mantenha a PoC aberta. Não execute nem favorite a entrada.'
