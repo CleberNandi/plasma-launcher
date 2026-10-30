@@ -8,9 +8,29 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
 import org.kde.plasma.private.kicker as Kicker
+import org.kde.kitemmodels as KItemModels
 
 PlasmoidItem {
     id: root
+
+    property string searchText: ""
+    readonly property string searchQuery: root.searchText.trim()
+    readonly property bool searching: root.searchQuery.length > 0
+    readonly property var allApplicationsModel: root.catalogReady
+        && root.catalogRevision >= 0 && appsModel.count > 0
+        ? appsModel.modelForRow(0) : null
+
+    onSearchQueryChanged: {
+        if (searchProxy)
+            searchProxy.invalidateFilter();
+        root.launchStatus = "Nenhuma execução solicitada";
+    }
+
+    function matchesSearch(name, description) {
+        const terms = root.searchQuery.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+        const haystack = (String(name ?? "") + " " + String(description ?? "")).toLowerCase();
+        return terms.every(term => haystack.includes(term));
+    }
 
     property bool catalogReady: true
     property int catalogRevision: 0
@@ -21,7 +41,7 @@ PlasmoidItem {
         // Índices são posições: após reconstrução, voltar ao primeiro grupo.
         root.subcategoryPath = [];
         root.selectedCategoryIndex = 0;
-        root.selectedCategoryName = "Aplicativos";
+        root.selectedCategoryName = appsModel.labelForRow(0) || "Aplicativos";
         root.catalogReady = true;
     }
 
@@ -94,6 +114,7 @@ PlasmoidItem {
     function selectCategory(row, label) {
         if (!root.catalogReady || row < 0 || row >= appsModel.count)
             return;
+        root.searchText = "";
         root.subcategoryPath = [];
         root.selectedCategoryIndex = row;
         root.selectedCategoryName = label;
@@ -102,11 +123,20 @@ PlasmoidItem {
 
 
     function activateEntry(view, row, entry) {
-        const currentModel = view ? view.model : null;
+        let currentModel = view ? view.model : null;
         if (!root.catalogReady || !currentModel || !entry
             || Boolean(entry.disabled) || Boolean(entry.isSeparator)
             || !Number.isInteger(row) || row < 0 || row >= currentModel.count)
             return;
+
+        if (currentModel === searchProxy) {
+            const sourceIndex = searchProxy.mapToSource(searchProxy.index(row, 0));
+            currentModel = searchProxy.sourceModel;
+            row = sourceIndex.row;
+            if (!currentModel || !Number.isInteger(row)
+                || row < 0 || row >= currentModel.count)
+                return;
+        }
 
         if (Boolean(entry.hasChildren)) {
             root.enterSubcategory(currentModel, row, String(entry.display ?? ""));
@@ -136,10 +166,31 @@ PlasmoidItem {
         autoPopulate: true
         // Preservar categorias principais, reunindo os aplicativos dos subgrupos.
         flat: true
-        showAllApps: false
+        showAllApps: true
+        showAllAppsCategorized: false
+        showFavoritesPlaceholder: false
+        showRootSeparator: false
         showRecentApps: false
         showRecentDocs: false
         showPowerSession: false
+    }
+
+
+    KItemModels.KSortFilterProxyModel {
+        id: searchProxy
+        sourceModel: root.allApplicationsModel
+        sortRoleName: ""
+        // Resolver dinamicamente o ID do role description; o callback substitui
+        // o filtro padrão e combina esse role com Qt.DisplayRole.
+        filterRoleName: "description"
+        filterRowCallback: function(sourceRow, sourceParent) {
+            const source = searchProxy.sourceModel;
+            if (!source)
+                return false;
+            const sourceIndex = source.index(sourceRow, 0, sourceParent);
+            return root.matchesSearch(source.data(sourceIndex, Qt.DisplayRole),
+                source.data(sourceIndex, searchProxy.filterRole));
+        }
     }
 
     fullRepresentation: Item {
@@ -177,6 +228,29 @@ PlasmoidItem {
                     }
                 }
 
+                QQC2.TextField {
+                    id: searchField
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 280
+                    Layout.minimumWidth: 160
+                    placeholderText: "Pesquisar aplicativos…"
+                    text: root.searchText
+                    onTextEdited: root.searchText = text
+                    Component.onCompleted: searchField.forceActiveFocus()
+                    Keys.onEscapePressed: event => {
+                        root.searchText = "";
+                        event.accepted = true;
+                    }
+                }
+
+                PlasmaComponents.ToolButton {
+                    text: "Limpar"
+                    visible: root.searchText.length > 0
+                    onClicked: {
+                        root.searchText = "";
+                        searchField.forceActiveFocus();
+                    }
+                }
             }
 
             RowLayout {
@@ -208,7 +282,7 @@ PlasmoidItem {
                         width: categoryList.width - categoryScrollBar.width - 4
                         height: 32
                         text: String(model.display ?? "")
-                        highlighted: root.selectedCategoryIndex === index
+                        highlighted: !root.searching && root.selectedCategoryIndex === index
                         onClicked: root.selectCategory(index, String(model.display ?? ""))
 
                         contentItem: RowLayout {
@@ -242,14 +316,15 @@ PlasmoidItem {
 
                         PlasmaComponents.Button {
                             text: "Voltar"
-                            visible: root.subcategoryPath.length > 0
+                            visible: !root.searching && root.subcategoryPath.length > 0
                             flat: true
                             enabled: root.catalogReady && root.subcategoryPath.length > 0
                             onClicked: root.leaveSubcategory()
                         }
 
                         PlasmaComponents.Label {
-                            text: root.selectedCategoryName
+                            text: root.searching ? "Resultados (" + searchProxy.count + ")"
+                                : root.selectedCategoryName
                                 + (root.subcategoryPath.length > 0
                                     ? " / " + root.subcategoryPath.map(step => step.label).join(" / ")
                                     : "")
@@ -270,7 +345,8 @@ PlasmoidItem {
                             Math.floor((width - applicationScrollBar.width - 8) / 112))
                         cellWidth: Math.max(1, (width - applicationScrollBar.width - 8) / columnCount)
                         cellHeight: 104
-                        model: root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
+                        model: root.searching ? searchProxy
+                            : root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
                         // Reposicionamento pertence à view, não ao delegate destruído.
                         onModelChanged: applicationGrid.positionViewAtBeginning()
 
@@ -333,7 +409,8 @@ PlasmoidItem {
                     PlasmaComponents.Label {
                         Layout.fillWidth: true
                         visible: root.catalogReady && applicationGrid.count === 0
-                        text: "Nenhuma entrada disponível nesta categoria."
+                        text: root.searching ? "Nenhum aplicativo encontrado."
+                            : "Nenhuma entrada disponível nesta categoria."
                         wrapMode: Text.WordWrap
                     }
                 }
