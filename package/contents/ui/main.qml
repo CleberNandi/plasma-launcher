@@ -13,6 +13,25 @@ import org.kde.kitemmodels as KItemModels
 PlasmoidItem {
     id: root
 
+    signal selectionInvalidated()
+
+    function nextGridIndex(row, count, columns, direction) {
+        if (count <= 0)
+            return -1;
+        if (!Number.isInteger(row) || row < 0 || row >= count)
+            return 0;
+        const stride = Math.max(1, columns);
+        if (direction === "left")
+            return Math.max(0, row - 1);
+        if (direction === "right")
+            return Math.min(count - 1, row + 1);
+        if (direction === "up")
+            return Math.max(0, row - stride);
+        if (direction === "down")
+            return Math.min(count - 1, row + stride);
+        return row;
+    }
+
     property string searchText: ""
     readonly property string searchQuery: root.searchText.trim()
     readonly property bool searching: root.searchQuery.length > 0
@@ -21,6 +40,7 @@ PlasmoidItem {
         ? appsModel.modelForRow(0) : null
 
     onSearchQueryChanged: {
+        root.selectionInvalidated();
         if (searchProxy)
             searchProxy.invalidateFilter();
         root.launchStatus = "Nenhuma execução solicitada";
@@ -49,6 +69,7 @@ PlasmoidItem {
         target: appsModel
 
         function onModelAboutToBeReset() {
+            root.selectionInvalidated();
             root.catalogReady = false;
             root.subcategoryPath = [];
             root.launchStatus = "Nenhuma execução solicitada";
@@ -91,11 +112,13 @@ PlasmoidItem {
         const child = current.modelForRow(row);
         if (!child)
             return;
+        root.selectionInvalidated();
         root.subcategoryPath = root.subcategoryPath.concat([{row: row, label: label}]);
         root.launchStatus = "Nenhuma execução solicitada";
     }
 
     function leaveSubcategory() {
+        root.selectionInvalidated();
         root.subcategoryPath = root.subcategoryPath.slice(0, -1);
         root.launchStatus = "Nenhuma execução solicitada";
     }
@@ -114,6 +137,7 @@ PlasmoidItem {
     function selectCategory(row, label) {
         if (!root.catalogReady || row < 0 || row >= appsModel.count)
             return;
+        root.selectionInvalidated();
         root.searchText = "";
         root.subcategoryPath = [];
         root.selectedCategoryIndex = row;
@@ -237,6 +261,20 @@ PlasmoidItem {
                     text: root.searchText
                     onTextEdited: root.searchText = text
                     Component.onCompleted: searchField.forceActiveFocus()
+                    Keys.onDownPressed: event => {
+                        applicationGrid.focusForKeyboard(true);
+                        event.accepted = true;
+                    }
+                    Keys.onReturnPressed: event => {
+                        if (!event.isAutoRepeat && applicationGrid.focusForKeyboard(true))
+                            applicationGrid.requestActivation();
+                        event.accepted = true;
+                    }
+                    Keys.onEnterPressed: event => {
+                        if (!event.isAutoRepeat && applicationGrid.focusForKeyboard(true))
+                            applicationGrid.requestActivation();
+                        event.accepted = true;
+                    }
                     Keys.onEscapePressed: event => {
                         root.searchText = "";
                         event.accepted = true;
@@ -269,6 +307,44 @@ PlasmoidItem {
                     model: appsModel
                     enabled: root.catalogReady
                     boundsBehavior: Flickable.StopAtBounds
+                    activeFocusOnTab: true
+                    keyNavigationEnabled: false
+                    currentIndex: root.selectedCategoryIndex
+
+                    function moveCategory(delta) {
+                        if (!root.catalogReady || categoryList.count <= 0)
+                            return;
+                        const row = Math.max(0, Math.min(categoryList.count - 1,
+                            root.selectedCategoryIndex + delta));
+                        root.selectCategory(row, appsModel.labelForRow(row));
+                        categoryList.positionViewAtIndex(row, ListView.Contain);
+                    }
+
+                    Keys.onUpPressed: event => {
+                        categoryList.moveCategory(-1);
+                        event.accepted = true;
+                    }
+                    Keys.onDownPressed: event => {
+                        categoryList.moveCategory(1);
+                        event.accepted = true;
+                    }
+                    Keys.onRightPressed: event => {
+                        applicationGrid.focusForKeyboard(true);
+                        event.accepted = true;
+                    }
+                    Keys.onReturnPressed: event => {
+                        applicationGrid.focusForKeyboard(true);
+                        event.accepted = true;
+                    }
+                    Keys.onEnterPressed: event => {
+                        applicationGrid.focusForKeyboard(true);
+                        event.accepted = true;
+                    }
+                    Keys.onEscapePressed: event => {
+                        root.searchText = "";
+                        searchField.forceActiveFocus();
+                        event.accepted = true;
+                    }
 
                     QQC2.ScrollBar.vertical: QQC2.ScrollBar {
                         id: categoryScrollBar
@@ -283,7 +359,11 @@ PlasmoidItem {
                         height: 32
                         text: String(model.display ?? "")
                         highlighted: !root.searching && root.selectedCategoryIndex === index
-                        onClicked: root.selectCategory(index, String(model.display ?? ""))
+                        focusPolicy: Qt.NoFocus
+                        onClicked: {
+                            categoryList.forceActiveFocus();
+                            root.selectCategory(index, String(model.display ?? ""));
+                        }
 
                         contentItem: RowLayout {
                             spacing: 8
@@ -347,8 +427,105 @@ PlasmoidItem {
                         cellHeight: 104
                         model: root.searching ? searchProxy
                             : root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
-                        // Reposicionamento pertence à view, não ao delegate destruído.
-                        onModelChanged: applicationGrid.positionViewAtBeginning()
+                        signal activationRequested(int row)
+                        currentIndex: -1
+                        activeFocusOnTab: true
+                        keyNavigationEnabled: false
+
+                        function clearSelection() {
+                            applicationGrid.currentIndex = -1;
+                        }
+
+                        function focusForKeyboard(first) {
+                            if (!root.catalogReady || applicationGrid.count <= 0)
+                                return false;
+                            if (first || applicationGrid.currentIndex < 0
+                                || applicationGrid.currentIndex >= applicationGrid.count)
+                                applicationGrid.currentIndex = 0;
+                            applicationGrid.positionViewAtIndex(applicationGrid.currentIndex, GridView.Contain);
+                            applicationGrid.forceLayout();
+                            applicationGrid.forceActiveFocus();
+                            return true;
+                        }
+
+                        function moveSelection(direction) {
+                            if (!root.catalogReady || applicationGrid.count <= 0)
+                                return;
+                            applicationGrid.currentIndex = root.nextGridIndex(applicationGrid.currentIndex,
+                                applicationGrid.count, applicationGrid.columnCount, direction);
+                            applicationGrid.positionViewAtIndex(applicationGrid.currentIndex, GridView.Contain);
+                        }
+
+                        function requestActivation() {
+                            if (!root.catalogReady || !applicationGrid.activeFocus
+                                || applicationGrid.currentIndex < 0
+                                || applicationGrid.currentIndex >= applicationGrid.count)
+                                return;
+                            applicationGrid.forceLayout();
+                            applicationGrid.activationRequested(applicationGrid.currentIndex);
+                        }
+
+                        // Reposicionamento/seleção pertencem à view que continua viva.
+                        onModelChanged: {
+                            applicationGrid.clearSelection();
+                            applicationGrid.positionViewAtBeginning();
+                        }
+                        onCountChanged: applicationGrid.clearSelection()
+
+                        Connections {
+                            target: root
+                            function onSelectionInvalidated() { applicationGrid.clearSelection(); }
+                        }
+
+                        Connections {
+                            target: applicationGrid.model
+                            function onModelAboutToBeReset() { applicationGrid.clearSelection(); }
+                            function onModelReset() { applicationGrid.clearSelection(); }
+                            function onRowsInserted() { applicationGrid.clearSelection(); }
+                            function onRowsRemoved() { applicationGrid.clearSelection(); }
+                            function onRowsMoved() { applicationGrid.clearSelection(); }
+                            function onLayoutChanged() { applicationGrid.clearSelection(); }
+                        }
+
+                        Keys.onLeftPressed: event => {
+                            if (applicationGrid.currentIndex >= 0
+                                && applicationGrid.currentIndex % applicationGrid.columnCount === 0)
+                                categoryList.forceActiveFocus();
+                            else
+                                applicationGrid.moveSelection("left");
+                            event.accepted = true;
+                        }
+                        Keys.onRightPressed: event => {
+                            applicationGrid.moveSelection("right");
+                            event.accepted = true;
+                        }
+                        Keys.onUpPressed: event => {
+                            if (applicationGrid.currentIndex >= 0
+                                && applicationGrid.currentIndex < applicationGrid.columnCount)
+                                searchField.forceActiveFocus();
+                            else
+                                applicationGrid.moveSelection("up");
+                            event.accepted = true;
+                        }
+                        Keys.onDownPressed: event => {
+                            applicationGrid.moveSelection("down");
+                            event.accepted = true;
+                        }
+                        Keys.onReturnPressed: event => {
+                            if (!event.isAutoRepeat)
+                                applicationGrid.requestActivation();
+                            event.accepted = true;
+                        }
+                        Keys.onEnterPressed: event => {
+                            if (!event.isAutoRepeat)
+                                applicationGrid.requestActivation();
+                            event.accepted = true;
+                        }
+                        Keys.onEscapePressed: event => {
+                            root.searchText = "";
+                            searchField.forceActiveFocus();
+                            event.accepted = true;
+                        }
 
                         QQC2.ScrollBar.vertical: QQC2.ScrollBar {
                             id: applicationScrollBar
@@ -368,13 +545,27 @@ PlasmoidItem {
                             text: String(model.display ?? "")
                             hoverEnabled: true
                             enabled: root.catalogReady
-                            focusPolicy: applicationDelegate.actionable ? Qt.StrongFocus : Qt.NoFocus
+                            focusPolicy: Qt.NoFocus
+                            highlighted: applicationGrid.activeFocus
+                                && applicationGrid.currentIndex === applicationDelegate.index
                             Accessible.name: Boolean(applicationDelegate.model.hasChildren)
                                 ? "Abrir grupo " + applicationDelegate.text
                                 : root.isLaunchableEntry(applicationDelegate.model)
                                     ? "Abrir " + applicationDelegate.text : applicationDelegate.text
-                            onClicked: root.activateEntry(applicationDelegate.GridView.view,
-                                applicationDelegate.index, applicationDelegate.model)
+                            onClicked: {
+                                const view = applicationDelegate.GridView.view;
+                                view.currentIndex = applicationDelegate.index;
+                                view.forceActiveFocus();
+                                root.activateEntry(view, applicationDelegate.index, applicationDelegate.model);
+                            }
+
+                            Connections {
+                                target: applicationGrid
+                                function onActivationRequested(row) {
+                                    if (applicationDelegate.index === row)
+                                        root.activateEntry(applicationGrid, row, applicationDelegate.model);
+                                }
+                            }
 
                             QQC2.ToolTip.visible: applicationDelegate.hovered
                             QQC2.ToolTip.delay: 600
@@ -394,6 +585,8 @@ PlasmoidItem {
 
                                 PlasmaComponents.Label {
                                     text: applicationDelegate.text
+                                    color: applicationDelegate.highlighted
+                                        ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
                                     Layout.fillWidth: true
                                     horizontalAlignment: Text.AlignHCenter
                                     wrapMode: Text.Wrap

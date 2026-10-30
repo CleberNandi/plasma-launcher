@@ -289,3 +289,16 @@ verificados na workstation. A API privada segue provisória.
   Esta implementação não consulta runners ou indexadores de arquivos.
 - Refinamento visual fica reservado para comparação de mockups e referências
   do usuário, sem tratar a disposição provisória como decisão definitiva.
+
+## Aprendizagem aplicada — PoC 03D (homologação pendente)
+
+- Seleção e foco são estados diferentes: currentIndex escolhe a linha; activeFocus
+  determina quem recebe teclas. O destaque só aparece na grade que tem foco.
+- A view mantém seleção; delegates transitórios recebem um sinal e somente a linha
+  correspondente usa seus dados na ativação. Não persistir ponteiros de cards.
+- Uma nova consulta pode trocar o significado de um índice sem mudar a contagem.
+  Invalidar seleção na consulta e nos eventos estruturais do modelo.
+- KeyEvent.accepted evita propagação adicional da tecla; isAutoRepeat permite
+  bloquear Enter repetido sem impedir repetição de setas.
+- Separar teste da lógica de movimento do teste nativo de foco e entrega de teclas.
+  Uma função JavaScript correta não comprova interação Qt/Wayland.

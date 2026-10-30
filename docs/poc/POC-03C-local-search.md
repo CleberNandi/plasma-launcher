@@ -20,8 +20,8 @@ a contagem. Nenhum resultado exibe mensagem específica.
 Limpar ou Escape no campo remove a pesquisa e retorna à categoria selecionada.
 Selecionar uma categoria também limpa o texto. Somente espaços não ativam busca.
 Digitar/limpar não abre aplicativos; a ativação continua por clique explícito.
-Enter para abrir o primeiro resultado e navegação direcional de resultados ficam
-para o próximo incremento de teclado/foco, sem alegar suporte nesta entrega.
+O incremento [POC-03D-keyboard.md](POC-03D-keyboard.md) prepara ativação com Enter
+e navegação por setas, ainda pendentes de homologação nativa.
 
 Ao reconstruir o catálogo, a view e a origem do proxy são desligadas enquanto
 catalogReady é falso; a pesquisa é reaplicada à nova origem. Não se preservam
@@ -144,3 +144,10 @@ a busca code sem nova mudança que justifique regressão.
 Próxima entrega de usabilidade: seleção/foco nos resultados e ativação por
 teclado. O refinamento visual maior permanece reservado para referências do
 usuário e avaliação de mockups. Nenhum merge autorizado ou realizado.
+
+## Continuidade de teclado
+
+A implementação 03D usa a mesma pesquisa/ativação do clique, com seleção na grade,
+Enter e foco entre campo, grade e categorias. O teste por clique de 03C permanece
+histórico; não prova entrega de eventos ou foco dessa nova implementação.
+Roteiro e limites em [POC-03D-keyboard.md](POC-03D-keyboard.md).
