@@ -345,3 +345,26 @@ bash experiments/poc-02a/scripts/poc-02e2-catalog.sh
 ```
 
 Referência de formato: https://specifications.freedesktop.org/desktop-entry/latest/recognized-keys.html
+
+## Rodada parcial 02E.2 — 30/10/2026
+
+Usuário relatou refresh automático na inclusão (A) e atualização tardia,
+superior a 10 s, atribuída à fase B. A observação da fase B foi corrigida
+durante a fase C; os eventos de mudança e remoção podem ter se sobreposto.
+Capturas mostram refreshed/resets em 1/1, 2/2 e 4/4, mas não mostram a
+fixture A ou B; a captura de Desenvolvimento não exibe o fim da lista.
+Os quatro favoritos aparecem na captura final.
+
+Resultado parcial: refresh espontâneo relatado; inclusão, migração e
+remoção corretas do conteúdo não homologadas separadamente. Não atribuir
+os quatro sinais individualmente às fases. Limpeza foi alcançada pelo fluxo
+normal do script, mas ausência do arquivo deve ser confirmada na workstation.
+
+Roteiro revisado substitui a orientação de 10 s e fallback manual anterior:
+observar até 60 s sem clicar Atualizar catálogo, navegar novamente à categoria
+após reset e localizar a entrada no fim da lista. Confirmar conteúdo por fase,
+capturar antes de avançar e digitar auto apenas quando confirmado.
+Qualquer outra resposta encerra a rodada com limpeza, sem iniciar a fase seguinte.
+O intervalo registrado mede tempo até resposta humana, não latência do KDE.
+60 s é janela de observação, não SLA nem timeout implementado no script.
+Validação da revisão: bash -n PASS; execução KDE pendente.
