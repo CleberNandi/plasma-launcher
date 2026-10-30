@@ -9,9 +9,9 @@
 
 Ao abrir `package/`, a interface principal passa a apresentar categorias reais
 na barra lateral e nomes, ícones e descrições reais em uma GridView com rolagem.
-A seleção visual destaca a categoria principal. Grupos exibem Entrar e o
+A seleção visual destaca a categoria principal. Grupos abrem por clique no ícone/nome e o
 caminho permite Voltar. Aplicativos comuns são apresentados sem ação de execução;
-Kate mantém um botão explícito condicionado ao ID já homologado na PoC 02G.1.
+Kate abre pelo mesmo tipo de clique, condicionado ao ID já homologado na PoC 02G.1.
 
 O catálogo simulado da PoC 01 é removido desta branch. As seções simuladas
 Favoritos/Todos não são preservadas como se fossem nativas. A leitura de
@@ -87,10 +87,10 @@ Roteiro curto:
    até o final e a barra lateral até Utilitários.
 2. Educação → Ciências → Voltar → Matemática. Confirmar caminho e conteúdo;
    trocar para Desenvolvimento deve limpar o caminho.
-3. Com um grupo aberto, Atualizar catálogo: retorno ao nível inicial, conteúdo
-   válido e nenhum ReferenceError.
-4. Abrir Kate pelo botão; confirmar retorno e abertura visual. Nenhum outro
-   card deve oferecer abertura, e navegar/atualizar não deve iniciar aplicativos.
+3. O catálogo reage aos sinais nativos de mudança; não há refresh manual nesta
+   interface. O ensaio controlado de refresh permanece em experiments/poc-02a.
+4. Clicar no ícone/nome do Kate; confirmar a solicitação e a abertura visual.
+   Outros aplicativos continuam sem execução nesta prévia; navegar não inicia apps.
 5. Redimensionar entre o mínimo e uma janela maior, verificando colunas,
    nomes longos, rolagem e acesso aos botões.
 
@@ -163,3 +163,45 @@ Não foi instalada skill externa, dependência visual nem ferramenta na workstat
 A revisão usa os componentes nativos existentes; uma futura skill deverá ser
 avaliada quanto à adequação a QML/Plasma, sem presumir que regras para web se
 apliquem diretamente ao launcher.
+
+## Separar laboratório de interação do launcher — 30/10/2026
+
+As capturas do ajuste 4cd6a40 mostram quatro colunas, ícones menores,
+categorias em lista e tooltip com nome/descrição. O usuário identificou dois
+controles inadequados à interação esperada de um launcher: Atualizar no topo e
+Abrir Kate separado do ícone. Eles vieram dos ensaios de diagnóstico da PoC.
+
+Incremento preparado:
+
+- Remover Atualizar da representação principal, mantendo a observação dos sinais
+  do catálogo e a invalidação/reconexão de modelos. O laboratório preserva refresh
+  explícito; não foi adicionado polling ou reconstrução externa de cache.
+- Usar ItemDelegate como alvo de clique do conjunto ícone/nome. Hover e foco vêm
+  do controle nativo; tooltips e ícones de 32 px são preservados.
+- Abrir subcategorias pelo clique no grupo, sem botão Entrar.
+- Abrir Kate pelo clique no seu card, sem botão textual separado; ID exato e
+  validação de modelo/índice continuam obrigatórios.
+- Outros aplicativos ficam apenas apresentados nesta prévia. O rodapé continua
+  informando a restrição, e não se amplia a execução silenciosamente.
+- Exibir Voltar apenas dentro de subcategorias.
+- Barra lateral ampliada de 164 para 190 px para acomodar Desenvolvimento;
+  verificar novamente os nomes no ambiente real.
+- Altura da célula cai de 124 para 104 px, aproveitando a remoção das ações
+  separadas. O card ocupa a célula menos 8 px para espaçamento.
+- Status da solicitação usa texto curto em vez de ID/retorno bruto de diagnóstico.
+  Solicitação aceita não comprova janela aberta.
+
+A função activateEntry recebe view, índice e dados antes de qualquer mutação.
+Ela valida estado/limites, trata grupos e retorna imediatamente após navegar.
+Somente depois da checagem de identidade pode chamar trigger, com os mesmos
+argumentos vazio/null. Não consulta o delegate após a troca do modelo.
+
+Testes da função extraída passaram com entradas sintéticas: Kate exato, bloqueio
+de ID diferente/ausente, disabled/separador, índices inválidos, estado indisponível,
+grupo sem acesso após mutação e exceção do trigger. A única chamada de execução
+permanece guardada. Conferida ausência do botão de refresh e das ações separadas.
+
+Ainda pendentes lint Qt6 e teste no KDE deste incremento. Conferir hover, clique
+no Kate, grupo Ciências → Voltar e nomes da barra lateral. A restrição de execução
+a Kate deve continuar válida; não considerar todo card de aplicativo executável.
+Não repetir fixtures para validar somente essa alteração de interação.

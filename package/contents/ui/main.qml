@@ -104,6 +104,33 @@ PlasmoidItem {
         root.launchStatus = "Nenhuma execução solicitada";
     }
 
+
+    function activateEntry(view, row, entry) {
+        const currentModel = view ? view.model : null;
+        if (!root.catalogReady || !currentModel || !entry
+            || Boolean(entry.disabled) || Boolean(entry.isSeparator)
+            || row < 0 || row >= currentModel.count)
+            return;
+
+        if (Boolean(entry.hasChildren)) {
+            root.enterSubcategory(currentModel, row, String(entry.display ?? ""));
+            return;
+        }
+
+        // Limite da prévia: nomes/ícones de outros aplicativos não liberam execução.
+        if (!root.isAllowedKate(entry) || typeof currentModel.trigger !== "function")
+            return;
+
+        try {
+            const result = currentModel.trigger(row, "", null);
+            root.launchStatus = result
+                ? "Solicitação de abertura do Kate enviada ao KDE."
+                : "O KDE não aceitou a solicitação de abertura do Kate.";
+        } catch (error) {
+            root.launchStatus = "Falha ao solicitar abertura pelo Kicker: " + String(error);
+        }
+    }
+
     Plasmoid.icon: "start-here-kde"
     toolTipMainText: "Plasma Launcher Lab"
 
@@ -152,24 +179,6 @@ PlasmoidItem {
                     }
                 }
 
-                PlasmaComponents.Button {
-                    text: "Atualizar"
-                    flat: true
-                    icon.name: "view-refresh"
-                    enabled: root.catalogReady
-                    onClicked: {
-                        root.catalogReady = false;
-                        root.subcategoryPath = [];
-                        root.launchStatus = "Nenhuma execução solicitada";
-                        root.catalogStatus = "Atualização solicitada";
-                        try {
-                            appsModel.refresh();
-                        } catch (error) {
-                            root.catalogStatus = "Falha ao atualizar: " + String(error);
-                        }
-                        Qt.callLater(root.finishCatalogRefresh);
-                    }
-                }
             }
 
             RowLayout {
@@ -179,9 +188,9 @@ PlasmoidItem {
 
                 ListView {
                     id: categoryList
-                    Layout.minimumWidth: 164
-                    Layout.preferredWidth: 164
-                    Layout.maximumWidth: 164
+                    Layout.minimumWidth: 190
+                    Layout.preferredWidth: 190
+                    Layout.maximumWidth: 190
                     Layout.fillHeight: true
                     clip: true
                     spacing: 2
@@ -235,6 +244,7 @@ PlasmoidItem {
 
                         PlasmaComponents.Button {
                             text: "Voltar"
+                            visible: root.subcategoryPath.length > 0
                             flat: true
                             enabled: root.catalogReady && root.subcategoryPath.length > 0
                             onClicked: root.leaveSubcategory()
@@ -261,7 +271,7 @@ PlasmoidItem {
                         readonly property int columnCount: Math.max(1,
                             Math.floor((width - applicationScrollBar.width - 8) / 112))
                         cellWidth: Math.max(1, (width - applicationScrollBar.width - 8) / columnCount)
-                        cellHeight: 124
+                        cellHeight: 104
                         model: root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
                         // Reposicionamento pertence à view, não ao delegate destruído.
                         onModelChanged: applicationGrid.positionViewAtBeginning()
@@ -271,24 +281,35 @@ PlasmoidItem {
                             policy: QQC2.ScrollBar.AsNeeded
                         }
 
-                        delegate: Item {
+                        delegate: QQC2.ItemDelegate {
                             id: applicationDelegate
                             required property var model
                             required property int index
-                            width: applicationGrid.cellWidth
-                            height: applicationGrid.cellHeight
+                            readonly property bool actionable:
+                                Boolean(applicationDelegate.model.hasChildren)
+                                    || root.isAllowedKate(applicationDelegate.model)
+                            width: applicationGrid.cellWidth - 8
+                            height: applicationGrid.cellHeight - 8
+                            padding: 8
+                            text: String(model.display ?? "")
+                            hoverEnabled: true
+                            enabled: root.catalogReady
+                            focusPolicy: applicationDelegate.actionable ? Qt.StrongFocus : Qt.NoFocus
+                            Accessible.name: Boolean(applicationDelegate.model.hasChildren)
+                                ? "Abrir grupo " + applicationDelegate.text
+                                : root.isAllowedKate(applicationDelegate.model)
+                                    ? "Abrir Kate" : applicationDelegate.text
+                            onClicked: root.activateEntry(applicationDelegate.GridView.view,
+                                applicationDelegate.index, applicationDelegate.model)
 
-                            HoverHandler { id: applicationHover }
-                            QQC2.ToolTip.visible: applicationHover.hovered
+                            QQC2.ToolTip.visible: applicationDelegate.hovered
                             QQC2.ToolTip.delay: 600
-                            QQC2.ToolTip.text: String(applicationDelegate.model.display ?? "")
+                            QQC2.ToolTip.text: applicationDelegate.text
                                 + (String(applicationDelegate.model.description ?? "").length > 0
                                     ? "\n" + String(applicationDelegate.model.description) : "")
 
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 6
-                                spacing: 2
+                            contentItem: ColumnLayout {
+                                spacing: 4
 
                                 Kirigami.Icon {
                                     source: applicationDelegate.model.decoration
@@ -298,7 +319,7 @@ PlasmoidItem {
                                 }
 
                                 PlasmaComponents.Label {
-                                    text: String(applicationDelegate.model.display ?? "")
+                                    text: applicationDelegate.text
                                     Layout.fillWidth: true
                                     horizontalAlignment: Text.AlignHCenter
                                     wrapMode: Text.Wrap
@@ -307,49 +328,6 @@ PlasmoidItem {
                                 }
 
                                 Item { Layout.fillHeight: true }
-
-                                PlasmaComponents.Button {
-                                    text: "Entrar"
-                                    flat: true
-                                    Layout.alignment: Qt.AlignHCenter
-                                    visible: Boolean(applicationDelegate.model.hasChildren)
-                                    enabled: visible && root.catalogReady
-                                    onClicked: {
-                                        const currentView = applicationDelegate.GridView.view;
-                                        root.enterSubcategory(currentView ? currentView.model : null,
-                                            applicationDelegate.index,
-                                            String(applicationDelegate.model.display ?? ""));
-                                    }
-                                }
-
-                                PlasmaComponents.Button {
-                                    text: "Abrir Kate"
-                                    flat: true
-                                    Layout.alignment: Qt.AlignHCenter
-                                    visible: root.isAllowedKate(applicationDelegate.model)
-                                    enabled: visible && root.catalogReady
-                                    onClicked: {
-                                        const currentView = applicationDelegate.GridView.view;
-                                        const currentModel = currentView ? currentView.model : null;
-                                        const row = applicationDelegate.index;
-                                        if (!root.catalogReady
-                                            || !root.isAllowedKate(applicationDelegate.model)
-                                            || !currentModel
-                                            || typeof currentModel.trigger !== "function"
-                                            || row < 0 || row >= currentModel.count) {
-                                            root.launchStatus = "Abertura bloqueada: identidade ou modelo indisponível";
-                                            return;
-                                        }
-                                        try {
-                                            const result = currentModel.trigger(row, "", null);
-                                            root.launchStatus = root.allowedKateId
-                                                + " | Retorno de Kicker.trigger: " + String(result)
-                                                + "; confirme visualmente se Kate abriu";
-                                        } catch (error) {
-                                            root.launchStatus = "Falha ao solicitar abertura pelo Kicker: " + String(error);
-                                        }
-                                    }
-                                }
                             }
                         }
                     }
