@@ -1,7 +1,7 @@
 # PoC 03B — Abertura nativa de aplicativos pelo card
 
 **Data:** 30/10/2026.
-**Status:** implementação e verificações lógicas prontas; homologação KDE pendente.
+**Status:** abertura de múltiplos aplicativos pelo card homologada manualmente no ambiente local; detalhes e limites no registro abaixo.
 **Branch:** feat/poc-03-native-grid.
 **Base:** 1ebafd0, com apresentação plana e clique do Kate confirmados pelo usuário.
 
@@ -82,3 +82,25 @@ plasmawindowed "$PWD/package"
 Enviar nomes abertos e diagnósticos. Não é necessário testar todos os aplicativos,
 instalar componentes ou criar fixtures. Escolher aplicativos sem ações destrutivas
 ao abrir. Não fazer merge nem instalar o pacote no painel para esse teste.
+
+## Retorno funcional recebido — 30/10/2026
+
+O usuário informou: “Abri varios apps, e todos abriram”, em resposta ao teste da
+revisão 3f10e26. Não reenviou o HEAD local nem os nomes completos da amostra.
+O resultado é registrado como abertura positiva de múltiplos aplicativos testados,
+sem afirmar validação de todo o catálogo.
+
+Duas capturas mostram o pacote principal: Ajuda com aplicativos reais e
+Desenvolvimento com o card Kate destacado e o status
+“Solicitação de abertura de Kate enviada ao KDE.” O aviso de restrição ao Kate
+não aparece mais. As capturas não mostram as janelas abertas; a confirmação de
+abertura vem do relato explícito do usuário.
+
+Homologado o caminho funcional positivo da PoC 03B nessa rodada local.
+Não foi fornecida nova saída/código de saída de qmllint ou log do viewer.
+Ausência de abertura ao apenas navegar, cobertura completa de teclado,
+atualização dinâmica dessa representação e popup no painel não foram atestados
+especificamente nesta mensagem. Não ampliar essas evidências automaticamente.
+
+Nenhum merge realizado. Próximos incrementos de usabilidade: pesquisa local,
+navegação por teclado/foco e favoritos com contexto de persistência definido.
