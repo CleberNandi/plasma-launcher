@@ -1,7 +1,7 @@
 # PoC 02G.1 — Identidade do aplicativo
 
 **Data:** 30/10/2026.
-**Status:** ID aceito e retorno true do Kicker comprovados em b878a9a; confirmação visual da abertura pendente.
+**Status:** homologação funcional positiva em b878a9a: ID aceito, Kicker retornou true e usuário confirmou abertura do Kate.
 **Baseline:** c263a32, com retorno funcional agregado positivo para Bound.
 
 ## Comportamento
@@ -110,3 +110,12 @@ mostra apenas o launcher. Confirmação visual de abertura após o clique perman
 pendente; o retorno true não substitui essa evidência.
 Os casos negativos de IDs ausentes/diferentes continuam cobertos apenas por
 testes lógicos sintéticos, sem criar desktop entries artificiais na workstation.
+
+## Confirmação da abertura — 30/10/2026
+
+Em complemento à captura e ao terminal da rodada b878a9a, o usuário confirmou:
+“sim kate abriu com sucesso”. Encerrada a pendência de confirmação visual dessa
+solicitação explícita. Homologado o caminho positivo da PoC 02G.1 no ambiente
+local informado, sem ampliar a validação para outros empacotamentos ou versões.
+Casos negativos permanecem verificados apenas por testes lógicos sintéticos.
+A confirmação não modifica o registro de lint: código de saída não capturado.
