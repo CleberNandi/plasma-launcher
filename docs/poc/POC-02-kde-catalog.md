@@ -395,3 +395,22 @@ A fase B (alteração do nome e migração de Development para Utility) não foi
 executada nesta rodada; permanece pendente. Não repetir inclusão/remoção
 apenas porque o usuário registrou a fase A como inconclusiva: separar o rótulo
 digitado dos fatos visuais e do ciclo de vida esperado do arquivo.
+
+## Correção do critério de sinais — 30/10/2026
+
+Usuário reiterou ausência de novo refreshed durante a pausa A; a captura
+mostra A em Desenvolvimento com contadores 2/2. Após encerramento/limpeza,
+captura mostra 3/3 e ausência de A. Não tratar a permanência do arquivo A
+como falha nem exigir sinal refreshed para aceitar a presença do conteúdo.
+
+A instrumentação atual conta somente refreshed e resets, não rowsInserted,
+rowsRemoved ou dataChanged dos submodelos. Atualização incremental sem reset
+é uma hipótese; não foi instrumentada nem comprovada nesta rodada.
+O aparecimento da fixture e a emissão de refreshed são observações distintas.
+
+O prompt passa a pedir sim/nao para conteúdo confirmado, aceitando auto por
+compatibilidade. Sem exigir mudança dos contadores. As instruções anteriores
+que condicionavam avanço ao sinal ficam substituídas por este critério.
+Nenhuma nova repetição de inclusão/remoção é exigida agora.
+Fase B permanece pendente. Execução e lint QML não realizados nesta alteração
+de roteiro; código do plasmoid não alterado.
