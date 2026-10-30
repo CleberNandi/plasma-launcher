@@ -48,14 +48,14 @@ observe() {
     local mode note started=$SECONDS
     printf '\n%s\n' "$1"
     printf '%s\n' 'Aguarde até 60 s sem atualizar catálogo/cache.'
-    printf '%s\n' 'Após refresh, volte à categoria indicada e procure a entrada no FINAL da lista.'
-    printf '%s\n' 'Não basta ver o contador mudar: confirme nome/categoria/ausência da entrada.'
+    printf '%s\n' 'Procure a entrada no FINAL da categoria indicada, mesmo sem sinal refreshed.'
+    printf '%s\n' 'Critério: conteúdo correto. O contador pode permanecer igual; anote-o separadamente.'
     printf '%s\n' 'Capture a tela com o resultado e os contadores antes de avançar.'
-    printf '%s\n' 'Se não concluir em 60 s, não clique refresh: registre inconclusivo.'
-    read -r -p 'Digite auto se confirmou visualmente, ou inconclusivo para encerrar: ' mode
+    printf '%s\n' 'Na fase A, A deve APARECER E PERMANECER. Só mudará para B após sua confirmação.'
+    read -r -p 'Conteúdo esperado confirmado? Digite sim para avançar, ou nao para encerrar: ' mode
     read -r -p 'Detalhes (conteúdo observado e contadores): ' note
     printf 'OBSERVAÇÃO: modo=%s; intervalo até resposta=%ss; %s\n' "$mode" "$((SECONDS - started))" "$note"
-    if [[ "$mode" != auto ]]; then
+    if [[ "$mode" != sim && "$mode" != auto ]]; then
         printf '%s\n' 'Rodada interrompida. A limpeza pode gerar outro refresh; não atribua esse evento à fase interrompida.'
         exit 0
     fi
