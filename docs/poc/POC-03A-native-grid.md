@@ -1,7 +1,7 @@
 # PoC 03A — Catálogo nativo na grade principal
 
 **Data:** 30/10/2026.
-**Status:** primeira grade renderizada em capturas; layout inicial rejeitado na revisão visual. Ajuste compacto preparado; novo lint/homologação pendentes.
+**Status:** grade compacta renderizada; clique no card do Kate confirmado em bfee9a4. Apresentação plana por categoria preparada; homologação KDE pendente.
 **Branch:** feat/poc-03-native-grid.
 **Base:** 73899697e76f8ce1a6152c7232455fc19f6b6b80, checkpoint da PoC 02.
 
@@ -24,8 +24,9 @@ painel. A validação do popup no painel continuará pendente após o smoke em j
 
 ## Escolhas de implementação
 
-- Reaproveitada a lógica validada no laboratório: RootModel hierárquico,
-  modelForRow por nível, revisão observável e invalidação do caminho no reset.
+- Reaproveitada a lógica validada no laboratório: RootModel com categorias
+  principais e submodelos planos (flat: true), revisão observável e invalidação
+  do caminho no reset. Navegação hierárquica preservada como fallback.
 - ComponentBehavior: Bound e propriedades required explícitas nos delegates.
 - GridView substitui GridLayout/Repeater para oferecer rolagem e instanciação
   limitada dos cards visíveis. Quantidade de colunas calculada pela largura útil,
@@ -85,8 +86,9 @@ Roteiro curto:
 
 1. Confirmar categorias e grade com nomes/ícones reais; rolar Desenvolvimento
    até o final e a barra lateral até Utilitários.
-2. Educação → Ciências → Voltar → Matemática. Confirmar caminho e conteúdo;
-   trocar para Desenvolvimento deve limpar o caminho.
+2. Selecionar Educação: esperar aplicativos diretamente, sem exigir entrada em
+   Ciências/Matemática. LibreOffice Math deve aparecer uma única vez nessa categoria.
+   Trocar para Desenvolvimento deve manter conteúdo e título coerentes.
 3. O catálogo reage aos sinais nativos de mudança; não há refresh manual nesta
    interface. O ensaio controlado de refresh permanece em experiments/poc-02a.
 4. Clicar no ícone/nome do Kate; confirmar a solicitação e a abertura visual.
@@ -205,3 +207,57 @@ Ainda pendentes lint Qt6 e teste no KDE deste incremento. Conferir hover, clique
 no Kate, grupo Ciências → Voltar e nomes da barra lateral. A restrição de execução
 a Kate deve continuar válida; não considerar todo card de aplicativo executável.
 Não repetir fixtures para validar somente essa alteração de interação.
+
+## Clique confirmado e apresentação plana — 30/10/2026
+
+O usuário confirmou que Kate abriu com sucesso após a mudança para clique no
+card. As capturas mostram a representação sem Atualizar/Abrir Kate separados,
+com nomes das categorias legíveis e aplicativos reais na grade.
+Esta é evidência funcional do caminho positivo do card em bfee9a4; não foi enviada
+nova saída de lint nessa mensagem.
+
+O usuário questionou a utilidade de Educação → Ciências/Matemática quando ambos
+contêm o mesmo aplicativo. Decisão: preservar a taxonomia do KDE na origem, mas
+apresentar diretamente os aplicativos de cada categoria principal.
+Subcategorias continuam úteis no laboratório para explorar a API; não precisam
+ser expostas como etapas extras no fluxo principal.
+
+### Opção nativa escolhida
+
+`flat: true` no RootModel principal. Não foi introduzido filtro por nome da
+categoria, cópia de aplicativos para array JavaScript ou deduplicação própria.
+
+O código KDE consultado em
+[63e20ff9d15b — appsmodel.cpp](https://github.com/KDE/plasma-workspace/blob/63e20ff9d15bbb709d8fb59952088e536ae8d523/applets/kicker/appsmodel.cpp)
+mostra:
+
+- refreshInternal preserva grupos principais quando o modelo está na raiz.
+- AppGroupEntry recebe o valor de flat para construir o submodelo da categoria.
+- processServiceGroup percorre subgrupos recursivamente quando flat está ativo.
+- containsSameStorageId evita inserir novamente a mesma aplicação no submodelo.
+
+[appentry.cpp](https://github.com/KDE/plasma-workspace/blob/63e20ff9d15bbb709d8fb59952088e536ae8d523/applets/kicker/appentry.cpp)
+mostra a propagação da opção para o modelo filho.
+
+Essa inspeção fundamenta a mudança, mas não substitui observar a versão instalada.
+A deduplicação é por categoria; um aplicativo continua podendo pertencer
+legitimamente a categorias principais diferentes. Não deduplicar globalmente nem
+comparar pelo display: aplicativos distintos podem ter o mesmo nome.
+
+### Alcance e validação pendente
+
+Única alteração de comportamento no QML: flat false → true, com comentário.
+A lógica de seleção, clique, identidade do Kate, sinais e layout permanece igual.
+Laboratório, menu padrão e arquivos de classificação KDE não foram modificados.
+A navegação por grupos/Voltar fica preservada como fallback, normalmente sem uso
+quando o modelo entrega somente aplicativos por categoria.
+
+No Work foi conferida a diferença mínima e a implementação upstream; não se
+executou runtime KDE, lint ou teste nativo de deduplicação. Não há um PASS novo
+inferido a partir do código-fonte.
+
+Na próxima rodada, selecionar Educação e confirmar LibreOffice Math diretamente
+e sem duplicação, mantendo as categorias principais na lateral. Verificar uma
+categoria mais cheia para observar se outras duplicações internas foram removidas.
+O clique do Kate já confirmado não precisa de repetição extensa; checagem curta
+continua útil pois índices podem mudar com a opção flat.

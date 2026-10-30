@@ -137,7 +137,8 @@ PlasmoidItem {
     Kicker.RootModel {
         id: appsModel
         autoPopulate: true
-        flat: false
+        // Preservar categorias principais, reunindo os aplicativos dos subgrupos.
+        flat: true
         showAllApps: false
         showRecentApps: false
         showRecentDocs: false
