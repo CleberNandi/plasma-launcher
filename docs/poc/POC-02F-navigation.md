@@ -228,3 +228,65 @@ Esta rodada não incluiu novo resultado de qmllint, nem confirmação específic
 de reset com grupo aberto, troca de categoria, Kate ou redimensionamento.
 Essas pendências permanecem abertas. Não é necessário repetir o fluxo corrigido
 sem nova alteração que justifique regressão. Nenhum merge autorizado ou realizado.
+
+## Escopo explícito dos componentes — preparação em 30/10/2026
+
+Após a correção de ciclo de vida homologada em 8a050ce, foi preparado
+`pragma ComponentBehavior: Bound` no início do arquivo da interface experimental.
+Esta é uma alteração de semântica de contexto, não uma supressão de warnings:
+componentes internos ficam vinculados ao contexto de declaração e os IDs dos
+componentes externos do mesmo arquivo tornam-se resolvíveis pelo tooling.
+
+Referência: [Qt — ComponentBehavior](https://doc.qt.io/qt-6/qtqml-documents-structure.html#componentbehavior).
+
+Revisão dos delegates existentes:
+
+| Delegate | Dados recebidos explicitamente |
+| --- | --- |
+| Favorito | `required property var model` |
+| Categoria | `required property var model`, `required property int index` |
+| Aplicativo/grupo | `required property var model`, `required property int index` |
+
+Não há dependência intencional de dados de modelo injetados implicitamente no
+contexto desses delegates. O pragma exige propriedades required para esses dados.
+Ele não mantém objetos destruídos vivos e não autoriza acessar o delegate depois
+de trocar o modelo: a correção anterior foi preservada integralmente.
+
+Não houve mudança em funções, handlers, favoritos ou execução. O pacote
+principal e o probe separado não receberam o pragma; seus warnings permanecem
+fora deste incremento. A compatibilidade deste ajuste ainda deve ser confirmada
+no ambiente homologado; não se declara suporte adicional a versões do Plasma.
+
+### Validação pendente e tarefa curta para o Codex local
+
+No Work, foi revisada a declaração explícita dos dados dos três delegates e
+verificado que a única diferença no QML é o pragma com sua linha separadora.
+Não há binário Qt6/KDE neste ambiente; não foi estimada contagem nova de warnings.
+
+Após sincronizar a branch, com árvore limpa, executar:
+
+```bash
+/usr/lib/qt6/bin/qmllint --version
+/usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml experiments/poc-02a/package/contents/ui/main.qml
+```
+
+Registrar o código de saída e todos os diagnósticos dessa invocação. Não misturar
+o resultado com o binário Qt5 ou com os warnings históricos dos outros pacotes.
+Se surgirem novos erros de import, tipo, propriedade requerida ou contexto,
+relatar antes de dar o ajuste como homologado. Não instalar componentes.
+
+Como o pragma altera o contexto de todos os componentes internos, é necessária
+uma regressão nativa curta na revisão nova. O executor CLI pode fazer o lint;
+os cliques só podem ser atestados por quem interagir com a janela:
+
+1. Ler os favoritos e confirmar as quatro entradas já conhecidas.
+2. Entrar em Ciências, voltar, entrar em Matemática e mudar para Desenvolvimento:
+   caminho limpo, nomes/ícones presentes e nenhum ReferenceError.
+3. Entrar novamente em um grupo e atualizar catálogo: voltar ao nível inicial,
+   sem abertura de aplicativo nem erro de referência. Redimensionar e conferir
+   acesso aos controles e rolagem.
+4. Em Desenvolvimento, abrir Kate somente pelo botão explícito.
+
+Não repetir o teste dinâmico com fixtures para este ajuste. Não modificar dados
+de favoritos nem dar como concluídas interações que o executor não consiga fazer.
+O merge permanece fora do escopo autorizado.

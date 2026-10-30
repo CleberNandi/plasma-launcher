@@ -189,7 +189,7 @@ verificados na workstation. A API privada segue provisória.
 - Contadores são evidência de sinais recebidos. Refresh manual bem-sucedido
   não comprova detecção automática de mudanças nos arquivos .desktop.
 
-## Aprendizagem aplicada — PoC 02F.1 (homologação pendente)
+## Aprendizagem aplicada — PoC 02F.1 (entrada/retorno homologados; regressões pendentes)
 
 - Uma linha com `hasChildren` representa um grupo navegável; seus filhos vêm de
   `modelForRow(index)` no modelo desse nível.
@@ -203,3 +203,16 @@ verificados na workstation. A API privada segue provisória.
   passam o modelo à função externa, em vez de depender de IDs internos.
 - Teste JavaScript com modelo sintético não comprova renderização nem sinalização
   do modelo Qt. A homologação local está descrita na PoC 02F.1.
+
+### Escopo e vida útil — correções aplicadas em 02F.1
+
+- Trocar o modelo pode destruir o delegate que disparou o clique. Não consultar
+  seu contexto após a troca; reposicionamento pertence ao `onModelChanged` da
+  view que continua viva. Correção homologada manualmente em 8a050ce.
+- `pragma ComponentBehavior: Bound` explicita o contexto dos componentes internos
+  e permite resolver IDs externos do mesmo arquivo. Não prolonga a vida de
+  delegates nem substitui a correção anterior.
+- Com Bound, dados de modelo devem entrar por propriedades `required`.
+  Os três delegates experimentais já declaram esses dados explicitamente.
+- O pragma foi preparado para validação Qt6 local. Redução de warnings e
+  ausência de regressão visual precisam ser medidas, não inferidas.
