@@ -244,3 +244,39 @@ VS Code, abertura correta da linha 52 uma vez e bloqueio durante reset.
 Nenhuma validação de destruição/recriação nativa dos delegates é inferida.
 Reteste: code → KATE → Ark → code, aguardando um segundo por consulta.
 Confirmar nomes, ícones, abertura por clique/Enter e logs correspondentes.
+
+## Confirmação nativa após a correção — 04/11/2026
+
+Após a publicação de a1e84de, o usuário confirmou: “agora deu certo o code, kate
+e outros”. A captura mostra Visual Studio Code com nome e ícone correspondentes.
+O log fornecido confirma igualdade de nome/ícone entre card, proxy e origem:
+
+| Consulta | Linha proxy → origem | Resultado |
+| --- | --- | --- |
+| Ark | 0 → 2 | Ark |
+| kate | 0 → 18 | Kate |
+| code | 0 → 53 | Visual Studio Code |
+| anti | 0 → 1 | Antigravity IDE |
+| qt | 0 → 16 | Haruna |
+| qt | 1 → 40 | Qt Assistant |
+| qt | 2 → 41 | Qt D-Bus Viewer |
+| qt | 3 → 42 | Qt Linguist |
+| qt | 4 → 43 | Qt V4L2 video capture utility |
+
+O ID do card também corresponde aos aplicativos nomeados. Os caminhos pessoais
+dos ícones não são reproduzidos neste documento. A linha de VS Code mudou de 52
+para 53 entre rodadas, reforçando que posição não é identidade persistente.
+Haruna na busca qt não é, isoladamente, uma falha: o filtro consulta nome e
+descrição; o trecho de log não contém a descrição para afirmar a correspondência
+textual específica.
+
+Não foi enviado SHA local ou resultado explícito do qmllint; o retorno é uma
+validação funcional manual da correção visual nos casos observados, não de todos
+os cenários da matriz. O trecho fornecido não contém erros QML; contém apenas
+telemetria e mensagens qml: 0/undefined.
+
+Encerrada a coleta, foram removidos exclusivamente a função SEARCH_DIAG, seu
+timer e os handlers de coleta. Permanecem a barreira searchResultsReady, a
+atualização do filtro antes de revincular a grade e o guard de nome desatualizado.
+A limpeza foi conferida por inspeção do código e ausência de referências ao
+diagnóstico; não exige repetir a homologação completa. Sem merge.

@@ -132,3 +132,13 @@ uma divergência de nome/ícone nos resultados filtrados; a busca Code abriu VS 
 mas exibiu outro aplicativo no card. O SHA local não foi informado. Não se infere
 aprovação individual de Escape, Tab, repetição ou reset de catálogo.
 A correção candidata e seu reteste estão registrados em POC-03C-local-search.md.
+
+## Atualização de validação — 04/11/2026
+
+O usuário confirmou anteriormente setas e Enter funcionando. Após o ajuste de
+ciclo de vida da grade (a1e84de), confirmou code, kate e outros corretos, com
+telemetria de card/proxy/origem coincidente. A correção visual foi registrada em
+POC-03C-local-search.md e a instrumentação temporária foi removida.
+Continuam sem confirmação individual nesta rodada: Escape, Tab/Shift+Tab,
+auto-repeat, reset do catálogo e RTL/acessibilidade. Não se amplia a homologação
+do teclado por inferência a partir da validação visual.
