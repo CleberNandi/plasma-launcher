@@ -124,3 +124,11 @@ row(), pois a interface QML expõe uma propriedade.
 A função real de ativação foi exercitada com mocks: linha filtrada 2 mapeada
 para origem 7 com uma chamada trigger; índice inválido e origem ausente não
 ativam. Isso não substitui qmllint e execução no KDE, ainda pendentes.
+
+## Retorno manual de teclado — 04/11/2026
+
+O usuário confirmou que setas e Enter funcionam. Nesta mesma rodada apareceu
+uma divergência de nome/ícone nos resultados filtrados; a busca Code abriu VS Code,
+mas exibiu outro aplicativo no card. O SHA local não foi informado. Não se infere
+aprovação individual de Escape, Tab, repetição ou reset de catálogo.
+A correção candidata e seu reteste estão registrados em POC-03C-local-search.md.

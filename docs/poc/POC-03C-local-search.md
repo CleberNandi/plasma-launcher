@@ -151,3 +151,34 @@ A implementação 03D usa a mesma pesquisa/ativação do clique, com seleção n
 Enter e foco entre campo, grade e categorias. O teste por clique de 03C permanece
 histórico; não prova entrega de eventos ou foco dessa nova implementação.
 Roteiro e limites em [POC-03D-keyboard.md](POC-03D-keyboard.md).
+
+## Divergência visual na busca — 04/11/2026
+
+O usuário confirmou setas e Enter funcionando. Também relatou que buscar Code
+abre o VS Code, mas o card não mostra o ícone correto; a captura mostra ainda
+nome incorreto (Visualizador de processos com fal…), enquanto o status indica
+solicitação de Visual Studio Code. Outros resultados também foram afetados.
+Isso é uma falha de correspondência visual, não homologação completa da busca.
+Não foi fornecido o SHA local desta rodada.
+
+Hipótese de trabalho: bindings de apresentação via model.display/decoration não
+acompanham os dados atuais da linha filtrada. Não há reprodução no runtime deste
+ambiente que permita atribuir a causa ao Qt, ao KItemModels ou ao tema.
+
+O delegate agora declara explicitamente os roles requeridos display, decoration,
+description, favoriteId e flags. Um Item recebe os roles; o ItemDelegate interno
+mantém o botão nativo. Essa separação evita colisão entre o role display e a
+propriedade display de AbstractButton. Texto, ícone e tooltip leem esses roles;
+mouse e teclado recebem um entryData construído deles, preservando mapToSource
+e os guards. Nenhum rebuild de cache, fallback de ícone ou troca de filtro.
+Referência: [Qt — Models and Views](https://doc.qt.io/qt-6/qtquick-modelviewsdata-modelview.html).
+
+Verificação lógica com funções e snapshot extraídos do QML: Code mapeado à linha
+20 e Kate à linha 7; status com o nome correspondente; disabled e esquema diferente
+de applications recusados; whitespace conferido. Esse teste não reproduz bindings
+nem renderização Qt. O ajuste precisa de qmllint e validação visual no KDE.
+
+Reteste curto: buscar Code, conferir nome E ícone de Visual Studio Code e abrir;
+trocar por kate sem fechar a janela e conferir nome/ícone/Enter; limpar a consulta
+e voltar a uma categoria para confirmar cards e navegação. Se a divergência
+persistir, registrar sequência e terminal; não dar o problema como resolvido.

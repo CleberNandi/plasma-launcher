@@ -538,69 +538,87 @@ PlasmoidItem {
                             policy: QQC2.ScrollBar.AsNeeded
                         }
 
-                        delegate: QQC2.ItemDelegate {
+                        delegate: Item {
                             id: applicationDelegate
-                            required property var model
                             required property int index
-                            readonly property bool actionable:
-                                Boolean(applicationDelegate.model.hasChildren)
-                                    || root.isLaunchableEntry(applicationDelegate.model)
+                            // Roles explícitos: nome, ícone e ativação observam
+                            // os mesmos dados quando o proxy altera suas linhas.
+                            required property var display
+                            required property var decoration
+                            required property var description
+                            required property var favoriteId
+                            required property var isParent
+                            required property var hasChildren
+                            required property var isSeparator
+                            required property var disabled
+                            readonly property var entryData: ({
+                                display: applicationDelegate.display,
+                                favoriteId: applicationDelegate.favoriteId,
+                                isParent: applicationDelegate.isParent,
+                                hasChildren: applicationDelegate.hasChildren,
+                                isSeparator: applicationDelegate.isSeparator,
+                                disabled: applicationDelegate.disabled
+                            })
                             width: applicationGrid.cellWidth - 8
                             height: applicationGrid.cellHeight - 8
-                            padding: 8
-                            text: String(model.display ?? "")
-                            hoverEnabled: true
-                            enabled: root.catalogReady
-                            focusPolicy: Qt.NoFocus
-                            highlighted: applicationGrid.activeFocus
-                                && applicationGrid.currentIndex === applicationDelegate.index
-                            Accessible.name: Boolean(applicationDelegate.model.hasChildren)
-                                ? "Abrir grupo " + applicationDelegate.text
-                                : root.isLaunchableEntry(applicationDelegate.model)
-                                    ? "Abrir " + applicationDelegate.text : applicationDelegate.text
-                            onClicked: {
-                                const view = applicationDelegate.GridView.view;
-                                view.currentIndex = applicationDelegate.index;
-                                view.forceActiveFocus();
-                                root.activateEntry(view, applicationDelegate.index, applicationDelegate.model);
-                            }
-
-                            Connections {
-                                target: applicationGrid
-                                function onActivationRequested(row) {
-                                    if (applicationDelegate.index === row)
-                                        root.activateEntry(applicationGrid, row, applicationDelegate.model);
-                                }
-                            }
-
-                            QQC2.ToolTip.visible: applicationDelegate.hovered
-                            QQC2.ToolTip.delay: 600
-                            QQC2.ToolTip.text: applicationDelegate.text
-                                + (String(applicationDelegate.model.description ?? "").length > 0
-                                    ? "\n" + String(applicationDelegate.model.description) : "")
-
-                            contentItem: ColumnLayout {
-                                spacing: 4
-
-                                Kirigami.Icon {
-                                    source: applicationDelegate.model.decoration
-                                    implicitWidth: 32
-                                    implicitHeight: 32
-                                    Layout.alignment: Qt.AlignHCenter
+                            QQC2.ItemDelegate {
+                                id: applicationButton
+                                anchors.fill: parent
+                                padding: 8
+                                text: String(applicationDelegate.display ?? "")
+                                hoverEnabled: true
+                                enabled: root.catalogReady
+                                focusPolicy: Qt.NoFocus
+                                highlighted: applicationGrid.activeFocus
+                                    && applicationGrid.currentIndex === applicationDelegate.index
+                                Accessible.name: Boolean(applicationDelegate.hasChildren)
+                                    ? "Abrir grupo " + applicationButton.text
+                                    : root.isLaunchableEntry(applicationDelegate.entryData)
+                                        ? "Abrir " + applicationButton.text : applicationButton.text
+                                onClicked: {
+                                    const view = applicationDelegate.GridView.view;
+                                    view.currentIndex = applicationDelegate.index;
+                                    view.forceActiveFocus();
+                                    root.activateEntry(view, applicationDelegate.index, applicationDelegate.entryData);
                                 }
 
-                                PlasmaComponents.Label {
-                                    text: applicationDelegate.text
-                                    color: applicationDelegate.highlighted
-                                        ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignHCenter
-                                    wrapMode: Text.Wrap
-                                    maximumLineCount: 2
-                                    elide: Text.ElideRight
+                                Connections {
+                                    target: applicationGrid
+                                    function onActivationRequested(row) {
+                                        if (applicationDelegate.index === row)
+                                            root.activateEntry(applicationGrid, row, applicationDelegate.entryData);
+                                    }
                                 }
 
-                                Item { Layout.fillHeight: true }
+                                QQC2.ToolTip.visible: applicationButton.hovered
+                                QQC2.ToolTip.delay: 600
+                                QQC2.ToolTip.text: applicationButton.text
+                                    + (String(applicationDelegate.description ?? "").length > 0
+                                        ? "\n" + String(applicationDelegate.description) : "")
+
+                                contentItem: ColumnLayout {
+                                    spacing: 4
+
+                                    Kirigami.Icon {
+                                        source: applicationDelegate.decoration
+                                        implicitWidth: 32
+                                        implicitHeight: 32
+                                        Layout.alignment: Qt.AlignHCenter
+                                    }
+
+                                    PlasmaComponents.Label {
+                                        text: applicationButton.text
+                                        color: applicationButton.highlighted
+                                            ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+                                        Layout.fillWidth: true
+                                        horizontalAlignment: Text.AlignHCenter
+                                        wrapMode: Text.Wrap
+                                        maximumLineCount: 2
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Item { Layout.fillHeight: true }
+                                }
                             }
                         }
                     }
