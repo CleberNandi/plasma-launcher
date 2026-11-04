@@ -206,3 +206,41 @@ bindings do card. Remover esta instrumentação ao concluir a investigação.
 Verificação no Work: função real de diagnóstico extraída com mocks preservou
 nomes diferentes entre card/proxy/origem, identificou a linha mapeada e respeitou
 guards de limite/consulta vazia. Não há reprodução nativa aqui.
+
+## Diagnóstico nativo e ajuste de ciclo de vida — 04/11/2026
+
+O usuário forneceu SEARCH_DIAG de uma execução local:
+
+| Consulta | Linha proxy → origem | Card | Proxy e origem |
+| --- | --- | --- | --- |
+| code | 0 → 52 | Visualizador de processos com falhas; tools-report-bug; applications:org.kde.drkonqi.coredump.gui.desktop | Visual Studio Code; <instalação local do VS Code>/resources/app/resources/linux/code.png |
+| KATE | 0 → 18 | Kate; kate; applications:org.kde.kate.desktop | Kate; kate |
+| Ark | 0 → 2 | Ark; ark; applications:org.kde.ark.desktop | Ark; ark |
+
+O desvio inclui identidade do card, não apenas renderização do ícone. Leitura
+direta do proxy e da origem concordam. Isso localiza a divergência na passagem
+dos roles para o delegate durante filtragem incremental; não prova um defeito
+upstream específico nem alteração/cache inválido do arquivo desktop.
+O SHA local não foi enviado, mas a presença de SEARCH_DIAG confirma o diagnóstico.
+
+O ajuste usa searchResultsReady como barreira: mudança de consulta ou modelo de
+origem desvincula a grade de resultados (model null) e limpa a seleção.
+Qt.callLater executa uma função estável que invalida o filtro com a consulta
+atual e só então volta a vincular o proxy. Assim a grade recria seus delegates,
+em vez de manter o card observado com roles anteriores. Chamadas pendentes à
+mesma função são coalescidas pelo Qt. O catálogo e o proxy não são copiados;
+não há cache rebuild nem novo serviço. O custo é recriar os cards a cada consulta.
+
+A ativação pela busca recusa chamadas durante essa atualização e compara o nome
+do card com labelForRow da origem mapeada. Divergência é recusada com mensagem,
+evitando abrir silenciosamente outra apresentação. Essa comparação de nomes
+é um guard de consistência adicional; não é autenticação de IDs nem prova que
+nomes sejam únicos. Guards de tipo/ID e mapToSource continuam existentes.
+SEARCH_DIAG permanece temporariamente para confirmar card/proxy/origem juntos.
+
+Testes lógicos extraíram as funções reais: atualização em duas etapas, chamadas
+coalescidas, recusa durante atualização, recusa do card DrKonqi para origem
+VS Code, abertura correta da linha 52 uma vez e bloqueio durante reset.
+Nenhuma validação de destruição/recriação nativa dos delegates é inferida.
+Reteste: code → KATE → Ark → code, aguardando um segundo por consulta.
+Confirmar nomes, ícones, abertura por clique/Enter e logs correspondentes.

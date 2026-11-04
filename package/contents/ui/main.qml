@@ -39,12 +39,30 @@ PlasmoidItem {
         && root.catalogRevision >= 0 && appsModel.count > 0
         ? appsModel.modelForRow(0) : null
 
-    onSearchQueryChanged: {
+    property bool searchResultsReady: false
+
+    // Desvincular a view antes de filtrar: nesta sessão nativa, alterações
+    // incrementais deixavam roles de outro aplicativo no card sobrevivente.
+    function scheduleSearchRefresh() {
+        root.searchResultsReady = false;
         root.selectionInvalidated();
         if (searchProxy)
-            searchProxy.invalidateFilter();
+            Qt.callLater(root.finishSearchRefresh);
+    }
+
+    function finishSearchRefresh() {
+        if (!root.catalogReady || !root.allApplicationsModel)
+            return;
+        searchProxy.invalidateFilter();
+        root.searchResultsReady = true;
+    }
+
+    onSearchQueryChanged: {
+        root.scheduleSearchRefresh();
         root.launchStatus = "Nenhuma execução solicitada";
     }
+
+    onAllApplicationsModelChanged: root.scheduleSearchRefresh()
 
     function matchesSearch(name, description) {
         const terms = root.searchQuery.toLowerCase().split(/\s+/).filter(term => term.length > 0);
@@ -154,6 +172,8 @@ PlasmoidItem {
             return;
 
         if (currentModel === searchProxy) {
+            if (!root.searchResultsReady || !root.searching)
+                return;
             const sourceIndex = searchProxy.mapToSource(searchProxy.index(row, 0));
             // Usar a referência dinâmica ao Kicker: sourceModel é tipado
             // como QAbstractItemModel e não declara a propriedade count.
@@ -166,6 +186,11 @@ PlasmoidItem {
             if (!currentModel || !Number.isInteger(row)
                 || row < 0 || row >= currentModel.count)
                 return;
+            // Não abrir silenciosamente um item diferente do nome apresentado.
+            if (String(entry.display ?? "") !== currentModel.labelForRow(row)) {
+                root.launchStatus = "Resultado desatualizado; refaça a pesquisa.";
+                return;
+            }
         }
 
         if (Boolean(entry.hasChildren)) {
@@ -191,7 +216,7 @@ PlasmoidItem {
 
     // Diagnóstico temporário de correspondência; somente leitura, até 5 cards.
     function traceSearchEntry(row, name, icon, favoriteId) {
-        if (!root.catalogReady || !root.searching || !root.allApplicationsModel
+        if (!root.catalogReady || !root.searchResultsReady || !root.searching || !root.allApplicationsModel
             || !Number.isInteger(row) || row < 0 || row >= Math.min(searchProxy.count, 5))
             return;
         const proxyIndex = searchProxy.index(row, 0);
@@ -438,7 +463,8 @@ PlasmoidItem {
                         }
 
                         PlasmaComponents.Label {
-                            text: root.searching ? "Resultados (" + searchProxy.count + ")"
+                            text: root.searching ? (root.searchResultsReady
+                                ? "Resultados (" + searchProxy.count + ")" : "Pesquisando…")
                                 : root.selectedCategoryName
                                 + (root.subcategoryPath.length > 0
                                     ? " / " + root.subcategoryPath.map(step => step.label).join(" / ")
@@ -460,7 +486,7 @@ PlasmoidItem {
                             Math.floor((width - applicationScrollBar.width - 8) / 112))
                         cellWidth: Math.max(1, (width - applicationScrollBar.width - 8) / columnCount)
                         cellHeight: 104
-                        model: root.searching ? searchProxy
+                        model: root.searching ? (root.searchResultsReady ? searchProxy : null)
                             : root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
                         signal activationRequested(int row)
                         currentIndex: -1
@@ -670,7 +696,8 @@ PlasmoidItem {
 
                     PlasmaComponents.Label {
                         Layout.fillWidth: true
-                        visible: root.catalogReady && applicationGrid.count === 0
+                        visible: root.catalogReady && (!root.searching || root.searchResultsReady)
+                            && applicationGrid.count === 0
                         text: root.searching ? "Nenhum aplicativo encontrado."
                             : "Nenhuma entrada disponível nesta categoria."
                         wrapMode: Text.WordWrap
