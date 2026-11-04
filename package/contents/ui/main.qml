@@ -155,8 +155,14 @@ PlasmoidItem {
 
         if (currentModel === searchProxy) {
             const sourceIndex = searchProxy.mapToSource(searchProxy.index(row, 0));
-            currentModel = searchProxy.sourceModel;
+            // Usar a referência dinâmica ao Kicker: sourceModel é tipado
+            // como QAbstractItemModel e não declara a propriedade count.
+            currentModel = root.allApplicationsModel;
+            // QModelIndex.row integra a API QML documentada pelo Qt, mas
+            // seus metadados não são reconhecidos por este qmllint.
+            // qmllint disable missing-property
             row = sourceIndex.row;
+            // qmllint enable missing-property
             if (!currentModel || !Number.isInteger(row)
                 || row < 0 || row >= currentModel.count)
                 return;

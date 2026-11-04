@@ -102,3 +102,25 @@ Sem merge.
 
 O layout maior segue provisório; teclado não determina a futura direção visual
 nem dispensa avaliação dos mockups/referências que o usuário irá reunir.
+
+## Retorno do lint local — 04/11/2026
+
+O usuário reportou dois avisos missing-property no caminho de ativação da busca:
+QModelIndex.row e QAbstractItemModel.count. Não foi relatado resultado do teste
+nativo de teclado nesta rodada. A colagem do comando também continha o marcador
+[200~, causando bad pattern no zsh; isso é separado dos avisos QML.
+
+A ativação agora recupera a origem por root.allApplicationsModel, a referência
+dinâmica ao modelo Kicker também usada em sourceModel do proxy. Essa referência
+preserva count e trigger, ausentes da interface estática QAbstractItemModel.
+O mapeamento continua sendo mapToSource, sem tratar linha filtrada como origem.
+
+QModelIndex.row é uma propriedade da API QML documentada pelo Qt:
+[QModelIndex em QML](https://doc.qt.io/qt-6/qmodelindex-and-related-classes-in-qml.html).
+Foi mantida uma supressão missing-property somente nessa linha, com comentário
+explicativo; os demais diagnósticos continuam habilitados. Não se troca row por
+row(), pois a interface QML expõe uma propriedade.
+
+A função real de ativação foi exercitada com mocks: linha filtrada 2 mapeada
+para origem 7 com uma chamada trigger; índice inválido e origem ausente não
+ativam. Isso não substitui qmllint e execução no KDE, ainda pendentes.
