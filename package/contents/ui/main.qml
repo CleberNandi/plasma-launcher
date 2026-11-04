@@ -188,6 +188,35 @@ PlasmoidItem {
         }
     }
 
+
+    // Diagnóstico temporário de correspondência; somente leitura, até 5 cards.
+    function traceSearchEntry(row, name, icon, favoriteId) {
+        if (!root.catalogReady || !root.searching || !root.allApplicationsModel
+            || !Number.isInteger(row) || row < 0 || row >= Math.min(searchProxy.count, 5))
+            return;
+        const proxyIndex = searchProxy.index(row, 0);
+        const sourceIndex = searchProxy.mapToSource(proxyIndex);
+        // qmllint disable missing-property
+        const sourceRow = sourceIndex.row;
+        // qmllint enable missing-property
+        if (!Number.isInteger(sourceRow) || sourceRow < 0
+            || sourceRow >= root.allApplicationsModel.count)
+            return;
+        const source = root.allApplicationsModel;
+        console.log("SEARCH_DIAG " + JSON.stringify({
+            query: root.searchQuery,
+            proxyRow: row,
+            sourceRow: sourceRow,
+            cardName: String(name ?? ""),
+            cardIcon: String(icon ?? ""),
+            cardId: String(favoriteId ?? ""),
+            proxyName: String(searchProxy.data(proxyIndex, Qt.DisplayRole) ?? ""),
+            proxyIcon: String(searchProxy.data(proxyIndex, Qt.DecorationRole) ?? ""),
+            sourceName: String(source.data(sourceIndex, Qt.DisplayRole) ?? ""),
+            sourceIcon: String(source.data(sourceIndex, Qt.DecorationRole) ?? "")
+        }));
+    }
+
     Plasmoid.icon: "start-here-kde"
     toolTipMainText: "Plasma Launcher Lab"
 
@@ -559,6 +588,22 @@ PlasmoidItem {
                                 isSeparator: applicationDelegate.isSeparator,
                                 disabled: applicationDelegate.disabled
                             })
+                            Timer {
+                                id: searchTraceTimer
+                                interval: 500
+                                onTriggered: root.traceSearchEntry(applicationDelegate.index,
+                                    applicationDelegate.display, applicationDelegate.decoration,
+                                    applicationDelegate.favoriteId)
+                            }
+                            Component.onCompleted: searchTraceTimer.restart()
+                            onDisplayChanged: { if (searchTraceTimer) searchTraceTimer.restart(); }
+                            onDecorationChanged: { if (searchTraceTimer) searchTraceTimer.restart(); }
+                            onIndexChanged: { if (searchTraceTimer) searchTraceTimer.restart(); }
+                            Connections {
+                                target: root
+                                function onSearchQueryChanged() { searchTraceTimer.restart(); }
+                            }
+
                             width: applicationGrid.cellWidth - 8
                             height: applicationGrid.cellHeight - 8
                             QQC2.ItemDelegate {

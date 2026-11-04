@@ -182,3 +182,27 @@ Reteste curto: buscar Code, conferir nome E ícone de Visual Studio Code e abrir
 trocar por kate sem fechar a janela e conferir nome/ícone/Enter; limpar a consulta
 e voltar a uma categoria para confirmar cards e navegação. Se a divergência
 persistir, registrar sequência e terminal; não dar o problema como resolvido.
+
+## Reteste visual: divergência permanece — 04/11/2026
+
+Após a proposta 97f69be, o usuário enviou capturas: code ainda mostra o nome/ícone
+do Visualizador de processos com falha; kate mostra Kate com o ícone esperado.
+O usuário não forneceu SHA local ou saída do pull nesta resposta. Portanto,
+não se assume a revisão exata do processo aberto nem se declara a causa provada.
+
+Foi adicionada instrumentação temporária SEARCH_DIAG, somente leitura. Um timer
+de 500 ms após alteração da consulta/roles/índice compara os primeiros cinco cards:
+query, proxyRow, sourceRow, cardName/Icon/Id, proxyName/Icon e sourceName/Icon.
+O diagnóstico não solicita ativação, altera filtros, cache, favoritos ou arquivos.
+Acesso a QModelIndex.row tem a mesma exceção local de lint já documentada.
+
+Coleta local: fechar instâncias anteriores, atualizar a branch, informar
+git rev-parse --short HEAD e iniciar plasmawindowed com caminho absoluto.
+Pesquisar code, aguardar um segundo, trocar por kate e aguardar. Enviar as linhas
+SEARCH_DIAG do terminal e qualquer warning. Não atribuir ainda o defeito a cache,
+tema, Qt, KItemModels ou Kicker. Os dados distinguem divergência na origem/proxy de
+bindings do card. Remover esta instrumentação ao concluir a investigação.
+
+Verificação no Work: função real de diagnóstico extraída com mocks preservou
+nomes diferentes entre card/proxy/origem, identificou a linha mapeada e respeitou
+guards de limite/consulta vazia. Não há reprodução nativa aqui.
