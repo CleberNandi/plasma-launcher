@@ -345,13 +345,13 @@ PlasmoidItem {
                         clip: true
                         header: PlasmaComponents.Label {
                             width: categoryList.width
-                            height: 30
+                            height: 24
                             leftPadding: 8
                             text: "Aplicativos"
                             opacity: 0.65
                             verticalAlignment: Text.AlignVCenter
                         }
-                        spacing: 2
+                        spacing: 0
                         model: appsModel
                         enabled: root.catalogReady
                         boundsBehavior: Flickable.StopAtBounds
@@ -404,7 +404,7 @@ PlasmoidItem {
                             required property int index
                             required property var model
                             width: categoryList.width - categoryScrollBar.width - 4
-                            height: 34
+                            height: 32
                             text: String(model.display ?? "")
                             highlighted: !root.searching && root.selectedCategoryIndex === index
                             focusPolicy: Qt.NoFocus
@@ -481,7 +481,7 @@ PlasmoidItem {
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
                         readonly property int columnCount: Math.max(1,
-                            Math.floor((width - applicationScrollBar.width - 8) / 112))
+                            Math.floor((width - applicationScrollBar.width - 8) / 104))
                         cellWidth: Math.max(1, (width - applicationScrollBar.width - 8) / columnCount)
                         cellHeight: 92
                         model: root.searching ? (root.searchResultsReady ? searchProxy : null)

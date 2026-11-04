@@ -66,3 +66,23 @@ visualizador; o popup no painel ainda precisa de sua própria homologação.
 
 A grade C é a referência aprovada; densidade e medidas finais dependem do uso
 real no KDE. Sem merge autorizado.
+
+## Retorno visual e densidade — 04/11/2026
+
+O usuário enviou três capturas da estrutura compacta: Todos os aplicativos,
+busca kate e busca code. As buscas mostram nomes e ícones correspondentes.
+Não foram fornecidos nesta resposta SHA local, saída de lint ou confirmação
+explícita de abertura/teclado; não se infere esses resultados das capturas.
+
+A janela mostrada tem aproximadamente 700 unidades de largura. A grade anterior,
+com alvo mínimo de célula 112, passou para três colunas; a lateral também deixou
+Utilitários abaixo da área inicial. Ajuste de densidade: alvo da célula 104,
+categorias de 32 com espaçamento zero e cabeçalho lateral de 24.
+Ícones permanecem em 32 e altura das células da grade em 92. Scrollbars continuam
+disponíveis para fontes maiores e janelas menores.
+
+A expectativa é quatro colunas na largura observada; perto da largura mínima
+o layout ainda reduz para três. O alvo de densidade não fixa quatro colunas nem
+garante ausência de rolagem em qualquer escala de fonte/tela.
+As alterações de QML se limitam a quatro valores geométricos; busca, ativação,
+roles e teclado permanecem iguais. Lint/renderização deste ajuste ainda pendentes.
