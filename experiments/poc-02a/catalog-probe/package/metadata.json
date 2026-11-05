@@ -1,0 +1,10 @@
+{
+  "KPlugin": {
+    "Id": "dev.nandi.plasmalauncher.catalogprobe",
+    "Name": "Plasma Catalog Probe",
+    "Version": "0.1.0",
+    "License": "MIT"
+  },
+  "KPackageStructure": "Plasma/Applet",
+  "X-Plasma-API-Minimum-Version": "6.0"
+}
