@@ -3,7 +3,7 @@
 **Data:** 05/11/2026.
 **Base funcional:** 5fd072658fbf069daea33338b8b5f0a193ca5895.
 **Branch:** feat/poc-03-panel-popup.
-**Status:** coletor verificado; medições no KDE aguardadas. Sem merge.
+**Status:** primeira coleta local concluída; estabilização entre rodadas ainda não verificada. Sem merge.
 
 ## Revisão do checkpoint
 
@@ -107,3 +107,36 @@ Nenhum merge, troca do launcher original ou alteração da configuração do pai
 
 - https://docs.kernel.org/filesystems/proc.html
 - https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html
+
+## Primeira coleta local — 05/11/2026
+
+JSON enviado pelo usuário com status complete, escopo whole-plasmashell,
+SC_CLK_TCK=100 e todos os campos de memória presentes. Durações observadas:
+5,022 s / 15,067 s / 5,022 s.
+
+| Fase | CPU média (% de um núcleo) | RSS mediana (KiB) | PSS mediana (KiB) |
+| --- | ---: | ---: | ---: |
+| Fechado antes | 0,000 | 583592 | 316143 |
+| Interação | 1,925 | 595772 | 328261 |
+| Fechado depois | 0,199 | 597804 | 330280 |
+
+Entre as medianas fechadas: RSS +14212 KiB (+13,88 MiB), PSS +14137 KiB
+(+13,81 MiB). Memória final estável nas cinco amostras dessa fase; isso não
+demonstra estabilidade ao longo de novos ciclos. Zero CPU na primeira janela
+significa ausência de ticks de CPU observados nesse intervalo, não garantia
+de CPU perpetuamente nula.
+
+A média de CPU da interação é pequena em relação à capacidade de um núcleo;
+não informa picos, frame pacing nem tempo de abertura. A CPU após fechamento
+ficou em 0,199% de um núcleo. Não há relato específico de engasgos junto ao JSON.
+
+O aumento de memória pode incluir inicialização/caches do Qt, ícones, catálogo
+e outros widgets. Hipóteses, sem atribuição causal ao launcher. Não caracteriza
+vazamento por si só. Não chamar os 583,79 MiB de RSS final de “RAM do launcher”.
+
+Próxima verificação limitada: repetir a mesma coleta no mesmo processo/sessão,
+sem reinstalar, reiniciar ou encerrar a sessão. Comparar o novo fechado antes
+com o final desta rodada e o crescimento entre as duas fases fechadas novas.
+Se a memória estabilizar, isso favorece a hipótese de aquecimento/cache;
+se voltar a crescer, investigar tendência em mais ciclos antes de concluir.
+Não reiniciar para produzir artificialmente uma nova baseline fria.
