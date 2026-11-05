@@ -32,6 +32,52 @@ PlasmoidItem {
         return row;
     }
 
+
+    property bool showingFavorites: false
+    readonly property var favoriteIds:
+        root.normalizeFavoriteIds(Plasmoid.configuration.favoriteApplicationIds)
+
+    function normalizeFavoriteIds(values) {
+        const result = [];
+        if (!values || typeof values === "string")
+            return result;
+        for (let i = 0; i < values.length; ++i) {
+            const id = String(values[i] ?? "");
+            if (/^applications:[^?#]+\.desktop$/.test(id) && !result.includes(id))
+                result.push(id);
+        }
+        return result;
+    }
+
+    function isFavorite(id) {
+        return root.favoriteIds.includes(String(id));
+    }
+
+    function toggleFavorite(id) {
+        id = String(id);
+        if (!root.catalogReady || !/^applications:[^?#]+\.desktop$/.test(id))
+            return;
+        const ids = root.favoriteIds.slice();
+        const index = ids.indexOf(id);
+        if (index >= 0)
+            ids.splice(index, 1);
+        else
+            ids.push(id);
+        root.selectionInvalidated();
+        // Uma nova lista mantém a notificação do KConfig e o binding nativo.
+        Plasmoid.configuration.favoriteApplicationIds = ids;
+    }
+
+    function selectFavorites() {
+        if (!root.catalogReady)
+            return;
+        root.selectionInvalidated();
+        root.searchText = "";
+        root.subcategoryPath = [];
+        root.showingFavorites = true;
+        root.launchStatus = "Nenhuma execução solicitada";
+    }
+
     property string searchText: ""
     readonly property string searchQuery: root.searchText.trim()
     readonly property bool searching: root.searchQuery.length > 0
@@ -112,6 +158,8 @@ PlasmoidItem {
     property var subcategoryPath: []
 
     function selectedApplicationModel() {
+        if (root.catalogReady && root.showingFavorites)
+            return localFavorites;
         if (!root.catalogReady || root.selectedCategoryIndex < 0
             || root.selectedCategoryIndex >= appsModel.count)
             return null;
@@ -158,6 +206,7 @@ PlasmoidItem {
         root.selectionInvalidated();
         root.searchText = "";
         root.subcategoryPath = [];
+        root.showingFavorites = false;
         root.selectedCategoryIndex = row;
         root.selectedCategoryName = label;
         root.launchStatus = "Nenhuma execução solicitada";
@@ -229,6 +278,13 @@ PlasmoidItem {
         showRecentApps: false
         showRecentDocs: false
         showPowerSession: false
+
+        // O pai RootModel fornece o contexto de apresentação ao AppEntry.
+        // Armazenamento próprio em KConfig; sem contexto KAStats do Kickoff.
+        property var launcherFavorites: Kicker.SimpleFavoritesModel {
+            id: localFavorites
+            favorites: root.catalogReady && root.catalogRevision >= 0 ? root.favoriteIds : []
+        }
     }
 
 
@@ -250,39 +306,37 @@ PlasmoidItem {
     }
 
     fullRepresentation: Item {
-        Layout.minimumWidth: 700
+        QQC2.Menu {
+            id: favoriteMenu
+            property string applicationId: ""
+            property string applicationName: ""
+            title: favoriteMenu.applicationName
+
+            QQC2.MenuItem {
+                text: root.isFavorite(favoriteMenu.applicationId)
+                    ? "Remover dos favoritos" : "Adicionar aos favoritos"
+                icon.name: root.isFavorite(favoriteMenu.applicationId)
+                    ? "bookmark-remove" : "bookmark-new"
+                enabled: root.catalogReady
+                    && /^applications:[^?#]+\.desktop$/.test(favoriteMenu.applicationId)
+                onTriggered: root.toggleFavorite(favoriteMenu.applicationId)
+            }
+        }
+
+        Layout.minimumWidth: 660
         Layout.preferredWidth: 760
         Layout.minimumHeight: 460
-        Layout.preferredHeight: 560
+        Layout.preferredHeight: 520
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 12
-            spacing: 8
+            anchors.margins: 0
+            spacing: 0
 
             RowLayout {
                 Layout.fillWidth: true
-
-                Kirigami.Icon {
-                    source: "user-identity"
-                    implicitWidth: 28
-                    implicitHeight: 28
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
-
-                    PlasmaComponents.Label {
-                        text: "Plasma Launcher Lab"
-                        font.bold: true
-                    }
-
-                    PlasmaComponents.Label {
-                        text: "Aplicativos"
-                        opacity: 0.7
-                    }
-                }
+                Layout.margins: 12
+                spacing: 8
 
                 QQC2.TextField {
                     id: searchField
@@ -290,6 +344,16 @@ PlasmoidItem {
                     Layout.preferredWidth: 280
                     Layout.minimumWidth: 160
                     placeholderText: "Pesquisar aplicativos…"
+                    leftPadding: 34
+                    Accessible.name: "Pesquisar aplicativos"
+                    Kirigami.Icon {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 16
+                        height: 16
+                        source: "edit-find"
+                    }
                     text: root.searchText
                     onTextEdited: root.searchText = text
                     Component.onCompleted: searchField.forceActiveFocus()
@@ -323,112 +387,195 @@ PlasmoidItem {
                 }
             }
 
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                color: Kirigami.Theme.textColor
+                opacity: 0.12
+            }
+
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 12
+                spacing: 0
 
-                ListView {
-                    id: categoryList
-                    Layout.minimumWidth: 190
-                    Layout.preferredWidth: 190
-                    Layout.maximumWidth: 190
+                Item {
+                    Layout.minimumWidth: 208
+                    Layout.preferredWidth: 208
+                    Layout.maximumWidth: 208
                     Layout.fillHeight: true
-                    clip: true
-                    spacing: 2
-                    model: appsModel
-                    enabled: root.catalogReady
-                    boundsBehavior: Flickable.StopAtBounds
-                    activeFocusOnTab: true
-                    keyNavigationEnabled: false
-                    currentIndex: root.selectedCategoryIndex
 
-                    function moveCategory(delta) {
-                        if (!root.catalogReady || categoryList.count <= 0)
-                            return;
-                        const row = Math.max(0, Math.min(categoryList.count - 1,
-                            root.selectedCategoryIndex + delta));
-                        root.selectCategory(row, appsModel.labelForRow(row));
-                        categoryList.positionViewAtIndex(row, ListView.Contain);
+                    Rectangle {
+                        anchors.fill: parent
+                        color: Kirigami.Theme.textColor
+                        opacity: 0.035
                     }
 
-                    Keys.onUpPressed: event => {
-                        categoryList.moveCategory(-1);
-                        event.accepted = true;
-                    }
-                    Keys.onDownPressed: event => {
-                        categoryList.moveCategory(1);
-                        event.accepted = true;
-                    }
-                    Keys.onRightPressed: event => {
-                        applicationGrid.focusForKeyboard(true);
-                        event.accepted = true;
-                    }
-                    Keys.onReturnPressed: event => {
-                        applicationGrid.focusForKeyboard(true);
-                        event.accepted = true;
-                    }
-                    Keys.onEnterPressed: event => {
-                        applicationGrid.focusForKeyboard(true);
-                        event.accepted = true;
-                    }
-                    Keys.onEscapePressed: event => {
-                        root.searchText = "";
-                        searchField.forceActiveFocus();
-                        event.accepted = true;
-                    }
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 4
 
-                    QQC2.ScrollBar.vertical: QQC2.ScrollBar {
-                        id: categoryScrollBar
-                        policy: QQC2.ScrollBar.AsNeeded
-                    }
-
-                    delegate: QQC2.ItemDelegate {
-                        id: categoryDelegate
-                        required property int index
-                        required property var model
-                        width: categoryList.width - categoryScrollBar.width - 4
-                        height: 32
-                        text: String(model.display ?? "")
-                        highlighted: !root.searching && root.selectedCategoryIndex === index
-                        focusPolicy: Qt.NoFocus
-                        onClicked: {
-                            categoryList.forceActiveFocus();
-                            root.selectCategory(index, String(model.display ?? ""));
-                        }
-
-                        contentItem: RowLayout {
-                            spacing: 8
-
-                            Kirigami.Icon {
-                                source: categoryDelegate.model.decoration
-                                implicitWidth: 16
-                                implicitHeight: 16
+                        QQC2.ItemDelegate {
+                            id: favoritesButton
+                            Layout.fillWidth: true
+                            implicitHeight: 32
+                            text: "Favoritos"
+                            icon.name: "bookmarks"
+                            highlighted: root.showingFavorites && !root.searching
+                            enabled: root.catalogReady
+                            onClicked: {
+                                favoritesButton.forceActiveFocus();
+                                root.selectFavorites();
                             }
-
-                            PlasmaComponents.Label {
-                                text: categoryDelegate.text
-                                color: categoryDelegate.highlighted
-                                    ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
+                            Keys.onDownPressed: event => {
+                                root.selectCategory(0, appsModel.labelForRow(0));
+                                categoryList.forceActiveFocus();
+                                event.accepted = true;
+                            }
+                            Keys.onRightPressed: event => {
+                                applicationGrid.focusForKeyboard(true);
+                                event.accepted = true;
+                            }
+                            Keys.onEscapePressed: event => {
+                                root.searchText = "";
+                                searchField.forceActiveFocus();
+                                event.accepted = true;
                             }
                         }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            color: Kirigami.Theme.textColor
+                            opacity: 0.12
+                        }
+
+                        ListView {
+                            id: categoryList
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+                            header: PlasmaComponents.Label {
+                                width: categoryList.width
+                                height: 24
+                                leftPadding: 8
+                                text: "Aplicativos"
+                                opacity: 0.65
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            spacing: 0
+                            model: appsModel
+                            enabled: root.catalogReady
+                            boundsBehavior: Flickable.StopAtBounds
+                            activeFocusOnTab: true
+                            keyNavigationEnabled: false
+                            currentIndex: root.selectedCategoryIndex
+
+                            function moveCategory(delta) {
+                                if (!root.catalogReady || categoryList.count <= 0)
+                                    return;
+                                if (delta < 0 && root.selectedCategoryIndex === 0) {
+                                    root.selectFavorites();
+                                    favoritesButton.forceActiveFocus();
+                                    return;
+                                }
+                                const row = Math.max(0, Math.min(categoryList.count - 1,
+                                    root.selectedCategoryIndex + delta));
+                                root.selectCategory(row, appsModel.labelForRow(row));
+                                categoryList.positionViewAtIndex(row, ListView.Contain);
+                            }
+
+                            Keys.onUpPressed: event => {
+                                categoryList.moveCategory(-1);
+                                event.accepted = true;
+                            }
+                            Keys.onDownPressed: event => {
+                                categoryList.moveCategory(1);
+                                event.accepted = true;
+                            }
+                            Keys.onRightPressed: event => {
+                                applicationGrid.focusForKeyboard(true);
+                                event.accepted = true;
+                            }
+                            Keys.onReturnPressed: event => {
+                                applicationGrid.focusForKeyboard(true);
+                                event.accepted = true;
+                            }
+                            Keys.onEnterPressed: event => {
+                                applicationGrid.focusForKeyboard(true);
+                                event.accepted = true;
+                            }
+                            Keys.onEscapePressed: event => {
+                                root.searchText = "";
+                                searchField.forceActiveFocus();
+                                event.accepted = true;
+                            }
+
+                            QQC2.ScrollBar.vertical: QQC2.ScrollBar {
+                                id: categoryScrollBar
+                                policy: QQC2.ScrollBar.AsNeeded
+                            }
+
+                            delegate: QQC2.ItemDelegate {
+                                id: categoryDelegate
+                                required property int index
+                                required property var model
+                                width: categoryList.width - categoryScrollBar.width - 4
+                                height: 32
+                                text: String(model.display ?? "")
+                                highlighted: !root.searching && !root.showingFavorites
+                                    && root.selectedCategoryIndex === index
+                                focusPolicy: Qt.NoFocus
+                                onClicked: {
+                                    categoryList.forceActiveFocus();
+                                    root.selectCategory(index, String(model.display ?? ""));
+                                }
+
+                                contentItem: RowLayout {
+                                    spacing: 8
+
+                                    Kirigami.Icon {
+                                        source: categoryDelegate.model.decoration
+                                        implicitWidth: 16
+                                        implicitHeight: 16
+                                    }
+
+                                    PlasmaComponents.Label {
+                                        text: categoryDelegate.text
+                                        color: categoryDelegate.highlighted
+                                            ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+                        }
+
                     }
+                }
+
+                Rectangle {
+                    Layout.preferredWidth: 1
+                    Layout.fillHeight: true
+                    color: Kirigami.Theme.textColor
+                    opacity: 0.12
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumWidth: 0
-                    spacing: 8
+                    Layout.margins: 16
+                    spacing: 10
 
                     RowLayout {
                         Layout.fillWidth: true
 
                         PlasmaComponents.Button {
                             text: "Voltar"
-                            visible: !root.searching && root.subcategoryPath.length > 0
+                            visible: !root.searching && !root.showingFavorites
+                                && root.subcategoryPath.length > 0
                             flat: true
                             enabled: root.catalogReady && root.subcategoryPath.length > 0
                             onClicked: root.leaveSubcategory()
@@ -437,7 +584,7 @@ PlasmoidItem {
                         PlasmaComponents.Label {
                             text: root.searching ? (root.searchResultsReady
                                 ? "Resultados (" + searchProxy.count + ")" : "Pesquisando…")
-                                : root.selectedCategoryName
+                                : root.showingFavorites ? "Favoritos" : root.selectedCategoryName
                                 + (root.subcategoryPath.length > 0
                                     ? " / " + root.subcategoryPath.map(step => step.label).join(" / ")
                                     : "")
@@ -455,12 +602,13 @@ PlasmoidItem {
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
                         readonly property int columnCount: Math.max(1,
-                            Math.floor((width - applicationScrollBar.width - 8) / 112))
+                            Math.floor((width - applicationScrollBar.width - 8) / 104))
                         cellWidth: Math.max(1, (width - applicationScrollBar.width - 8) / columnCount)
-                        cellHeight: 104
+                        cellHeight: 92
                         model: root.searching ? (root.searchResultsReady ? searchProxy : null)
                             : root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
                         signal activationRequested(int row)
+                        signal favoriteMenuRequested(int row)
                         currentIndex: -1
                         activeFocusOnTab: true
                         keyNavigationEnabled: false
@@ -487,6 +635,22 @@ PlasmoidItem {
                             applicationGrid.currentIndex = root.nextGridIndex(applicationGrid.currentIndex,
                                 applicationGrid.count, applicationGrid.columnCount, direction);
                             applicationGrid.positionViewAtIndex(applicationGrid.currentIndex, GridView.Contain);
+                        }
+
+
+                        function requestFavoriteMenu() {
+                            if (!root.catalogReady || !applicationGrid.activeFocus
+                                || applicationGrid.currentIndex < 0
+                                || applicationGrid.currentIndex >= applicationGrid.count)
+                                return;
+                            applicationGrid.forceLayout();
+                            applicationGrid.favoriteMenuRequested(applicationGrid.currentIndex);
+                        }
+
+                        Shortcut {
+                            sequence: "Shift+F10"
+                            enabled: applicationGrid.activeFocus
+                            onActivated: applicationGrid.requestFavoriteMenu()
                         }
 
                         function requestActivation() {
@@ -523,7 +687,7 @@ PlasmoidItem {
                         Keys.onLeftPressed: event => {
                             if (applicationGrid.currentIndex >= 0
                                 && applicationGrid.currentIndex % applicationGrid.columnCount === 0)
-                                categoryList.forceActiveFocus();
+                                (root.showingFavorites ? favoritesButton : categoryList).forceActiveFocus();
                             else
                                 applicationGrid.moveSelection("left");
                             event.accepted = true;
@@ -586,12 +750,32 @@ PlasmoidItem {
                                 isSeparator: applicationDelegate.isSeparator,
                                 disabled: applicationDelegate.disabled
                             })
+
+                            function openFavoriteMenu() {
+                                if (!root.catalogReady || !root.isLaunchableEntry(applicationDelegate.entryData))
+                                    return;
+                                favoriteMenu.applicationId = String(applicationDelegate.favoriteId);
+                                favoriteMenu.applicationName = String(applicationDelegate.display);
+                                const position = applicationDelegate.mapToItem(applicationGrid, 16, 16);
+                                // Ancorar à view estável; o delegate pode ser removido.
+                                favoriteMenu.popup(applicationGrid, position.x, position.y);
+                            }
+
+                            TapHandler {
+                                acceptedButtons: Qt.RightButton
+                                onTapped: {
+                                    applicationGrid.currentIndex = applicationDelegate.index;
+                                    applicationGrid.forceActiveFocus();
+                                    applicationDelegate.openFavoriteMenu();
+                                }
+                            }
+
                             width: applicationGrid.cellWidth - 8
                             height: applicationGrid.cellHeight - 8
                             QQC2.ItemDelegate {
                                 id: applicationButton
                                 anchors.fill: parent
-                                padding: 8
+                                padding: 6
                                 text: String(applicationDelegate.display ?? "")
                                 hoverEnabled: true
                                 enabled: root.catalogReady
@@ -611,6 +795,10 @@ PlasmoidItem {
 
                                 Connections {
                                     target: applicationGrid
+                                    function onFavoriteMenuRequested(row) {
+                                        if (applicationDelegate.index === row)
+                                            applicationDelegate.openFavoriteMenu();
+                                    }
                                     function onActivationRequested(row) {
                                         if (applicationDelegate.index === row)
                                             root.activateEntry(applicationGrid, row, applicationDelegate.entryData);
@@ -655,25 +843,50 @@ PlasmoidItem {
                         visible: root.catalogReady && (!root.searching || root.searchResultsReady)
                             && applicationGrid.count === 0
                         text: root.searching ? "Nenhum aplicativo encontrado."
-                            : "Nenhuma entrada disponível nesta categoria."
+                            : root.showingFavorites
+                                ? "Nenhum favorito. Clique com o botão direito em um aplicativo para adicionar."
+                                : "Nenhuma entrada disponível nesta categoria."
                         wrapMode: Text.WordWrap
                     }
                 }
             }
 
-            PlasmaComponents.Label {
+            Rectangle {
                 Layout.fillWidth: true
-                text: root.catalogStatus
-                visible: root.catalogStatus.startsWith("Falha")
-                wrapMode: Text.WordWrap
-                opacity: 0.7
+                Layout.preferredHeight: 1
+                color: Kirigami.Theme.textColor
+                opacity: 0.12
             }
 
-            PlasmaComponents.Label {
+            RowLayout {
                 Layout.fillWidth: true
-                text: root.launchStatus
-                visible: root.launchStatus !== "Nenhuma execução solicitada"
-                wrapMode: Text.WordWrap
+                Layout.leftMargin: 12
+                Layout.rightMargin: 12
+                Layout.topMargin: 8
+                Layout.bottomMargin: 8
+                spacing: 8
+
+                Kirigami.Icon {
+                    source: "start-here-kde"
+                    implicitWidth: 20
+                    implicitHeight: 20
+                }
+
+                PlasmaComponents.Label {
+                    text: "Plasma Launcher"
+                    opacity: 0.7
+                }
+
+                PlasmaComponents.Label {
+                    Layout.fillWidth: true
+                    text: root.catalogStatus.startsWith("Falha")
+                        ? root.catalogStatus
+                        : root.launchStatus !== "Nenhuma execução solicitada"
+                            ? root.launchStatus : ""
+                    elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignRight
+                    opacity: 0.7
+                }
             }
         }
     }
