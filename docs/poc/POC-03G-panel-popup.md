@@ -3,7 +3,7 @@
 **Data:** 05/11/2026.
 **Base:** 0499d986e07752316607c73eb1fa434180c71776 (PoC 03E/03F).
 **Branch:** feat/poc-03-panel-popup.
-**Status:** preparado para teste local, sem homologação do painel.
+**Status:** interação básica no painel homologada pelo usuário; atalho global e desempenho pendentes.
 
 ## Comportamento
 
@@ -127,3 +127,26 @@ kpackagetool6 --type Plasma/Applet --remove dev.nandi.plasmalauncher
 ```
 
 PR dependente da branch compact-layout; sem merge na main.
+
+## Homologação local — 05/11/2026
+
+Revisão entregue para esta rodada: 2668a732b9f17168c710d665960abd2b65defd5f.
+Capturas mostram popup junto ao painel superior, buscas code/kate com nomes e
+ícones corretos e Favoritos com Antigravity IDE, Visual Studio Code e DBeaver.
+
+O usuário confirmou explicitamente os cinco itens da rodada:
+
+| Item | Resultado relatado |
+| --- | --- |
+| Digitar ao abrir sem clicar na pesquisa | PASS |
+| Enter abre o aplicativo e fecha o popup | PASS |
+| Escape limpa a busca; novo Escape fecha | PASS |
+| Clique fora ou novamente no ícone fecha | PASS |
+| Adicionar/remover favorito sem fechar o popup | PASS |
+
+Este aceite cobre esses cinco fluxos no painel testado. Não implica confirmação
+de autorepeat, Escape dentro do menu, persistência após novo login, painel
+vertical, outro monitor/escala, saída limpa do qmllint, atalho global ou medições
+de CPU/RAM/latência. Esses itens continuam sem evidência específica nesta rodada.
+Somente documentação alterada para registrar o retorno; não é necessário
+reinstalar o pacote ou repetir os cinco testes. Sem merge.
