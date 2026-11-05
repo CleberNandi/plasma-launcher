@@ -3,7 +3,7 @@
 **Data:** 05/11/2026.
 **Base funcional:** 5fd072658fbf069daea33338b8b5f0a193ca5895.
 **Branch:** feat/poc-03-panel-popup.
-**Status:** duas coletas locais concluídas no mesmo processo; crescimento menor na segunda rodada. Sem merge.
+**Status:** checkpoint experimental validado no ambiente local: fluxos básicos, atalho, persistência, duas coletas agregadas e qmllint com saída 0. Sem merge.
 
 ## Revisão do checkpoint
 
@@ -175,3 +175,33 @@ ao widget e sem medida de latência. Nenhum relato de engasgos foi confirmado.
 Não solicitar uma terceira rodada idêntica sem novo sintoma ou tendência que
 justifique. Para o checkpoint experimental, registrar esta caracterização
 limitada e seguir com a evidência de lint e revisão final de integração.
+
+## Lint local e fechamento do checkpoint — 05/11/2026
+
+O usuário executou no checkout local:
+
+```bash
+/usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml package/contents/ui/main.qml
+echo $?
+```
+
+Sem diagnósticos no terminal; código de saída explicitamente informado: 0.
+Isso encerra a pendência de evidência local do lint para esta rodada.
+O SHA local não foi incluído nessa saída; a implementação entregue é 2668a73,
+seguida apenas por documentação e coletor/testes separados do pacote principal.
+Não atribuir esta validação a outro ambiente ou versão não testados.
+
+Checkpoint experimental: funcionalidade básica no painel, atalho
+Ctrl+Shift+Enter e persistência após novo login homologados pelo usuário;
+coletor com cinco testes PASS; duas coletas do mesmo plasmashell registradas;
+revisão estática do pacote principal e sintaxe dos scripts do laboratório feitas.
+Não há novo bloqueio identificado no escopo revisado.
+
+Limites mantidos: API Kicker privada, sem matriz de versões Plasma, sem medição
+isolada de RAM do widget, sem latência/frame pacing, sem confirmação específica
+de autorepeat, outras escalas/monitores/painel vertical. Essas extensões de
+homologação não são inferidas do aceite local.
+
+Preparado para decisão de integração: PRs #2 → #3 → #4 → #5 → #6, preservando
+a ordem das dependências e revisando as bases após cada merge. Nenhum merge
+autorizado nesta etapa; branches e PRs permanecem preservados.
