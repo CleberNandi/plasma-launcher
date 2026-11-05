@@ -10,6 +10,7 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.plasma.private.kicker as Kicker
 import org.kde.kitemmodels as KItemModels
+import "components" as Components
 
 PlasmoidItem {
     id: root
@@ -921,6 +922,7 @@ PlasmoidItem {
             }
 
             RowLayout {
+                id: footerRow
                 Layout.fillWidth: true
                 Layout.leftMargin: 12
                 Layout.rightMargin: 12
@@ -928,19 +930,14 @@ PlasmoidItem {
                 Layout.bottomMargin: 8
                 spacing: 8
 
-                Kirigami.Icon {
-                    source: "start-here-kde"
-                    implicitWidth: 20
-                    implicitHeight: 20
-                }
-
-                PlasmaComponents.Label {
-                    text: "Plasma Launcher"
-                    opacity: 0.7
+                Components.ProfileBadge {
+                    Layout.minimumWidth: 0
+                    Layout.maximumWidth: Math.max(80, footerRow.width * 0.45)
                 }
 
                 PlasmaComponents.Label {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: root.catalogStatus.startsWith("Falha")
                         ? root.catalogStatus
                         : root.launchStatus !== "Nenhuma execução solicitada"

@@ -5,7 +5,7 @@
     "Description": "Launcher experimental para KDE Plasma 6",
     "Icon": "start-here-kde",
     "Category": "Application Launchers",
-    "Version": "0.1.1",
+    "Version": "0.1.2",
     "License": "MIT"
   },
   "KPackageStructure": "Plasma/Applet",
