@@ -196,3 +196,8 @@ Resultado relatado: widget no painel, favoritos e atalho preservados após o
 novo login. Atalho e persistência deixam de ser pendências dessa rodada.
 A confirmação é funcional e manual; não comprova desempenho, outras geometrias,
 autorepeat ou uma saída específica do qmllint. Não houve mudança de código.
+
+## Coleta e revisão do checkpoint
+
+Roteiro e limites em [POC-03H-performance.md](POC-03H-performance.md).
+Coletor Python separado do pacote instalado; não exige reinstalação do widget.
