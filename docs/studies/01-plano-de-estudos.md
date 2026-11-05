@@ -3,7 +3,7 @@
 **Versão:** 0.2
 **Stack:** KDE Plasma 6, Qt Quick 6, QML, JavaScript integrado ao QML  
 **Ambiente-alvo:** Arch Linux, KDE Plasma 6, sessão Wayland  
-**Status:** Checkpoint PoC 02: catálogo, Kate, favoritos e probe dinâmico validados no ambiente local; integração pendente
+**Status:** PoC 02 homologada no ambiente local; grade nativa 03A em homologação incremental; abertura geral 03B preparada
 
 ## Objetivo
 
@@ -136,7 +136,10 @@ Evitar escrever anotações extensas que apenas repetem a documentação oficial
 
 ## Próxima ação
 
-Revisar o checkpoint PoC 02 antes de integração. Homologar a navegação por subcategorias preparada na PoC 02F.1 (`docs/poc/POC-02F-navigation.md`); depois validar identidade estável dos aplicativos e definição do client/ordem dos favoritos. O probe de mudanças automáticas passou na rodada local de 30/10/2026; consultar `docs/poc/POC-02E-automated.md` para evidências e limites.
+Homologar a primeira integração do catálogo real à grade principal, em
+`docs/poc/POC-03A-native-grid.md`. Branch própria dependente do checkpoint 02;
+sem merge autorizado. Favoritos, busca local e execução geral ficam para
+incrementos posteriores.
 
 ## Aprendizagem aplicada — PoC 02C
 
@@ -217,7 +220,7 @@ verificados na workstation. A API privada segue provisória.
 - O pragma foi preparado para validação Qt6 local. Redução de warnings e
   ausência de regressão visual precisam ser medidas, não inferidas.
 
-## Aprendizagem aplicada — PoC 02G.1 (homologação pendente)
+## Aprendizagem aplicada — PoC 02G.1 (caminho positivo homologado)
 
 - `display` é um nome de apresentação, não uma identidade. Um mesmo nome pode
   pertencer a desktop entries diferentes.
@@ -230,3 +233,43 @@ verificados na workstation. A API privada segue provisória.
   de desktop entries continuam sendo responsabilidade da infraestrutura KDE.
 - O teste sintético verifica a decisão de permitir/bloquear; somente a execução
   local valida o role real entregue pelo Kicker e a abertura da aplicação.
+
+## Aprendizagem aplicada — PoC 03A (homologação pendente)
+
+- GridLayout posiciona objetos; GridView combina modelo, delegates, criação/remoção
+  conforme visibilidade e rolagem. A grade usa cellWidth/cellHeight para organizar
+  cada espaço, e o delegate define o conteúdo desse espaço.
+- Dados de apresentação vêm dos roles; a permissão experimental de abrir Kate
+  continua ligada ao ID, não ao nome mostrado no card.
+- GridView.view aponta para a view associada ao delegate. O contexto do card
+  pode desaparecer ao trocar modelo; a lógica não deve consultá-lo depois disso.
+- Quantidade de colunas deve considerar a largura útil e a barra de rolagem.
+  Testar aritmética não substitui verificar renderização, escala e nomes longos.
+- Homologação do modelo e da lista experimental reduz risco, mas não valida
+  automaticamente outra representação visual ou o popup no painel.
+
+### Revisão visual aplicada — PoC 03A
+
+- Densidade depende de colunas, altura de célula, espaço entre itens e hierarquia,
+  além do tamanho do ícone. A primeira grade renderizou, mas não atingiu a qualidade
+  visual esperada; teste funcional e avaliação de UX são critérios diferentes.
+- Informações secundárias extensas podem ir para tooltip; o nome permanece
+  disponível sem hover. Revisar depois acesso à descrição por teclado/leitor de tela.
+- ItemDelegate comunica seleção de categoria com menos ruído que botões elevados
+  repetidos. Contraste e dimensões devem ser confirmados com o tema/escala reais.
+- Não reduzir fontes para compensar geometria ruim. Ajustar primeiro composição
+  e espaços; comparar capturas antes de considerar o refinamento homologado.
+
+## Aprendizagem aplicada — PoC 03B (homologação pendente)
+
+- Generalizar a execução significa ampliar as entradas elegíveis, não reconstruir
+  comandos. O índice continua pertencendo ao submodelo exibido e trigger recebe
+  ação vazia e argumento null.
+- ID applications:…desktop indica uma entrada candidata de aplicação neste fluxo.
+  Não autentica sua origem. IDs de ações/query e outros esquemas ficam fora deste
+  incremento; não executar texto de nome, descrição ou busca.
+- Capturar o nome antes da chamada nativa evita consultar um delegate que possa
+  ter desaparecido durante a operação. Status positivo relata solicitação, não
+  abertura visual comprovada.
+- A restrição inicial ao Kate serviu à homologação controlada. Abertura geral é
+  uma mudança funcional explícita com regressão local própria.
