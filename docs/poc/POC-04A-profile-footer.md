@@ -4,7 +4,7 @@
 **Base:** main em 365f83fbd438e5b735a2244bcd6069f8977b8984.
 **Branch:** feat/poc-04a-profile-footer.
 **Pacote:** 0.1.2.
-**Status:** preparado para lint e avaliação visual no KDE.
+**Status:** viewer homologado pelo usuário; atualização e avaliação na instância do painel pendentes.
 
 ## Mudança
 
@@ -98,3 +98,20 @@ A reversão no painel não foi testada nesta rodada. Por isso, iniciar pelo view
 Perfil não inclui ações de sessão; estas seguem como próximo incremento separado.
 PR de documentação #7 é independente; este incremento parte da main funcional.
 Sem merge.
+
+## Retorno local — 05/11/2026
+
+Revisão funcional entregue: f41edbbe821b1ae59a1c6afbdd92fcbb82c8b8a4.
+A captura mostra identificação no rodapé com ícone genérico, sem sobreposição
+com a grade. Após solicitação específica para conferir tooltip, busca/abertura
+de Code e Kate e lint, o usuário confirmou: “sim, todos passaram pode seguire”.
+
+Registrar PASS relatado para esses itens no viewer. A confirmação do lint é
+agregada; nenhuma saída de terminal ou código de saída específico foi anexado
+nesta rodada. Não inferir avatar personalizado, nome completo longo,
+Image.Error ou leitor de tela a partir dessa captura.
+
+Próximo passo autorizado: upgrade do pacote existente para avaliar no painel,
+sem remover a instância. Conferir perfil, favoritos, atalho Ctrl+Shift+Enter,
+busca/abertura e fechamento. Caso o Plasma mantenha o QML anterior carregado,
+conferir após o próximo login natural. Nenhum merge autorizado nesta rodada.
