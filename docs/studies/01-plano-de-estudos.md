@@ -1,9 +1,9 @@
 # Plano de estudos — Plasma Launcher
 
-**Versão:** 0.2
+**Versão:** 0.3
 **Stack:** KDE Plasma 6, Qt Quick 6, QML, JavaScript integrado ao QML  
 **Ambiente-alvo:** Arch Linux, KDE Plasma 6, sessão Wayland  
-**Status:** catálogo/grade nativos e abertura de múltiplos apps homologados no ambiente local; pesquisa 03C preparada
+**Status:** checkpoint funcional integrado à main em 365f83f; catálogo, busca, teclado, favoritos e painel homologados localmente
 
 ## Objetivo
 
@@ -14,7 +14,7 @@ Aprender o necessário para desenvolver, testar e distribuir um launcher nativo 
 - Usar QML/Qt Quick para a interface e JavaScript integrado ao QML para lógica simples de interação.
 - Reutilizar as APIs públicas do KDE Plasma quando possível.
 - Manter KRunner para busca global (`Super + Espaço`), sem recriar indexação de arquivos.
-- Não utilizar C++, Electron, Python/PySide6 ou Node.js no MVP.
+- Não utilizar C++, Electron, Python/PySide6 ou Node.js como runtime do widget. Ferramentas auxiliares de verificação podem usar Python/Node fora do pacote.
 - Rust permanece hipótese futura, mediante necessidade demonstrada e decisão registrada.
 - Preservar o Kickoff/Andromeda e permitir testes reversíveis.
 - Não acoplar o projeto ao Arch Linux, embora seja o primeiro ambiente de homologação.
@@ -110,8 +110,8 @@ Aprender o necessário para desenvolver, testar e distribuir um launcher nativo 
 
 - [x] **PoC 00 — Baseline:** verificar versões existentes e APIs, sem instalar pacotes.
 - [x] **PoC 01 — Interface:** Plasmoid com popup e categorias simuladas.
-- [ ] **PoC 02 — Catálogo:** aplicativos e categorias reais por API validada.
-- [ ] **MVP 0.1 — Usabilidade:** favoritos, busca local, mouse/teclado.
+- [x] **PoC 02 — Catálogo:** aplicativos e categorias reais pela API Kicker, com dependência privada documentada.
+- [x] **MVP 0.1 — Usabilidade (checkpoint experimental):** favoritos, busca local, mouse/teclado, painel, atalho e persistência após login; pacote 0.1.1.
 - [ ] **MVP 0.2 — Qualidade:** tema, acessibilidade, testes e distribuição.
 
 ## Registro de aprendizagem
@@ -136,10 +136,10 @@ Evitar escrever anotações extensas que apenas repetem a documentação oficial
 
 ## Próxima ação
 
-Homologar a primeira integração do catálogo real à grade principal, em
-`docs/poc/POC-03A-native-grid.md`. Branch própria dependente do checkpoint 02;
-sem merge autorizado. Favoritos, busca local e execução geral ficam para
-incrementos posteriores.
+Preparar a PoC 04A de perfil no rodapé, conforme
+[estado e próximos incrementos](../ROADMAP.md). Ações de sessão serão tratadas
+separadamente na 04B. O checkpoint anterior foi integrado; novas entregas seguem
+em branches próprias, com avaliação local antes da integração.
 
 ## Aprendizagem aplicada — PoC 02C
 
@@ -234,7 +234,7 @@ verificados na workstation. A API privada segue provisória.
 - O teste sintético verifica a decisão de permitir/bloquear; somente a execução
   local valida o role real entregue pelo Kicker e a abertura da aplicação.
 
-## Aprendizagem aplicada — PoC 03A (homologação pendente)
+## Aprendizagem aplicada — PoC 03A (fluxos homologados localmente; evidências nas PoCs)
 
 - GridLayout posiciona objetos; GridView combina modelo, delegates, criação/remoção
   conforme visibilidade e rolagem. A grade usa cellWidth/cellHeight para organizar
@@ -260,7 +260,7 @@ verificados na workstation. A API privada segue provisória.
 - Não reduzir fontes para compensar geometria ruim. Ajustar primeiro composição
   e espaços; comparar capturas antes de considerar o refinamento homologado.
 
-## Aprendizagem aplicada — PoC 03B (homologação pendente)
+## Aprendizagem aplicada — PoC 03B (fluxos homologados localmente; evidências nas PoCs)
 
 - Generalizar a execução significa ampliar as entradas elegíveis, não reconstruir
   comandos. O índice continua pertencendo ao submodelo exibido e trigger recebe
@@ -274,7 +274,7 @@ verificados na workstation. A API privada segue provisória.
 - A restrição inicial ao Kate serviu à homologação controlada. Abertura geral é
   uma mudança funcional explícita com regressão local própria.
 
-## Aprendizagem aplicada — PoC 03C (homologação pendente)
+## Aprendizagem aplicada — PoC 03C (fluxos homologados localmente; evidências nas PoCs)
 
 - Proxy preserva a relação com o modelo Qt; não é uma cópia do catálogo em array.
   Seu índice é uma posição na lista filtrada. mapToSource converte para a linha
@@ -290,7 +290,7 @@ verificados na workstation. A API privada segue provisória.
 - Refinamento visual fica reservado para comparação de mockups e referências
   do usuário, sem tratar a disposição provisória como decisão definitiva.
 
-## Aprendizagem aplicada — PoC 03D (homologação pendente)
+## Aprendizagem aplicada — PoC 03D (fluxos homologados localmente; evidências nas PoCs)
 
 - Seleção e foco são estados diferentes: currentIndex escolhe a linha; activeFocus
   determina quem recebe teclas. O destaque só aparece na grade que tem foco.
@@ -302,3 +302,21 @@ verificados na workstation. A API privada segue provisória.
   bloquear Enter repetido sem impedir repetição de setas.
 - Separar teste da lógica de movimento do teste nativo de foco e entrega de teclas.
   Uma função JavaScript correta não comprova interação Qt/Wayland.
+
+## Checkpoint integrado — 05/11/2026
+
+PRs #2 a #6 integrados em main (365f83f). As seções de aprendizagem acima
+registram a evolução das PoCs; instruções experimentais antigas não substituem
+o fluxo atual do pacote principal.
+
+- Proxy correto não garante dados atualizados nos delegates: a divergência
+  entre card e catálogo foi diagnosticada e corrigida com reconstrução da view.
+- Persistir IDs por instância separa favoritos deste launcher do Kickoff.
+- Foco inicial precisa ser aplicado em cada abertura, não apenas na criação.
+- Atalho Ctrl+Shift+Enter e persistência após novo login foram homologados.
+- qmllint local: sem diagnósticos, saída 0. Coletor: cinco testes aprovados.
+- Duas coletas do plasmashell inteiro mostraram crescimento menor na segunda
+  rodada; não comprovam consumo isolado, latência ou ausência de vazamentos.
+
+Perfil e ações de sessão ainda não implementados. Consultar o roadmap para
+escopo, ordem e critérios; a implementação atual mantém KRunner separado.
