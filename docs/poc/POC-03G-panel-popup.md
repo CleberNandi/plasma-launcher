@@ -3,7 +3,7 @@
 **Data:** 05/11/2026.
 **Base:** 0499d986e07752316607c73eb1fa434180c71776 (PoC 03E/03F).
 **Branch:** feat/poc-03-panel-popup.
-**Status:** interação básica no painel homologada pelo usuário; atalho global e desempenho pendentes.
+**Status:** interação básica, atalho Ctrl+Shift+Enter e persistência após novo login homologados pelo usuário; desempenho pendente.
 
 ## Comportamento
 
@@ -185,3 +185,14 @@ Cadeia atual: PR #2 → #3 → #4 → #5 → #6. Cada base corresponde à
 branch anterior; o head 5dfff6c está 55 commits à frente de main, sem commits
 atrás. Isso verifica ancestralidade, não substitui revisão completa de código.
 A leitura direta do PR #6 informa mergeable=true/clean. Nenhum merge executado.
+
+## Retorno complementar — atalho e novo login (05/11/2026)
+
+O usuário informou Ctrl+Shift+Enter como a combinação usada na rodada de
+abertura, foco e fechamento. Depois encerrou a sessão e entrou novamente,
+confirmando: “Encerrei a sessao e voltou tudo cerftinho”.
+
+Resultado relatado: widget no painel, favoritos e atalho preservados após o
+novo login. Atalho e persistência deixam de ser pendências dessa rodada.
+A confirmação é funcional e manual; não comprova desempenho, outras geometrias,
+autorepeat ou uma saída específica do qmllint. Não houve mudança de código.
