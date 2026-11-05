@@ -6,12 +6,25 @@ import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
+import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.plasma.private.kicker as Kicker
 import org.kde.kitemmodels as KItemModels
 
 PlasmoidItem {
     id: root
+
+    // O Plasma hospeda o popup; fora do painel, manter a representação completa.
+    readonly property bool inPanel: Plasmoid.formFactor === PlasmaCore.Types.Horizontal
+        || Plasmoid.formFactor === PlasmaCore.Types.Vertical
+    preferredRepresentation: root.inPanel ? root.compactRepresentation : root.fullRepresentation
+    activationTogglesExpanded: true
+    hideOnWindowDeactivate: true
+
+    function closePanelPopup() {
+        if (root.inPanel)
+            root.expanded = false;
+    }
 
     signal selectionInvalidated()
 
@@ -257,6 +270,8 @@ PlasmoidItem {
             root.launchStatus = result
                 ? "Solicitação de abertura de " + applicationName + " enviada ao KDE."
                 : "O KDE não aceitou a solicitação de abertura de " + applicationName + ".";
+            if (result)
+                root.closePanelPopup();
         } catch (error) {
             root.launchStatus = "Falha ao solicitar abertura pelo Kicker: " + String(error);
         }
@@ -305,7 +320,70 @@ PlasmoidItem {
         }
     }
 
+    compactRepresentation: PlasmaComponents.ToolButton {
+        id: panelButton
+        property bool expandedOnPress: false
+        Layout.minimumWidth: Kirigami.Units.iconSizes.smallMedium
+        Layout.minimumHeight: Kirigami.Units.iconSizes.smallMedium
+        Layout.preferredWidth: Plasmoid.formFactor === PlasmaCore.Types.Horizontal
+            ? panelButton.height : Kirigami.Units.iconSizes.medium
+        Layout.preferredHeight: Plasmoid.formFactor === PlasmaCore.Types.Vertical
+            ? panelButton.width : Kirigami.Units.iconSizes.medium
+        icon.name: "start-here-kde"
+        text: "Plasma Launcher"
+        display: QQC2.AbstractButton.IconOnly
+        Accessible.name: "Abrir Plasma Launcher"
+        down: panelButton.pressed || root.expanded
+        onPressed: panelButton.expandedOnPress = root.expanded
+        onClicked: root.expanded = !panelButton.expandedOnPress
+    }
+
     fullRepresentation: Item {
+        id: launcherContent
+        Keys.onEscapePressed: event => launcherContent.handleEscape(event)
+
+        function prepareOpening() {
+            if (!launcherContent.visible || (root.inPanel && !root.expanded))
+                return;
+            root.searchText = "";
+            root.selectionInvalidated();
+            root.launchStatus = "Nenhuma execução solicitada";
+            searchField.forceActiveFocus();
+        }
+
+        function handleEscape(event) {
+            event.accepted = true;
+            if (event.isAutoRepeat)
+                return;
+            if (root.searchText.length > 0) {
+                root.searchText = "";
+                root.selectionInvalidated();
+                searchField.forceActiveFocus();
+            } else {
+                root.closePanelPopup();
+                if (!root.inPanel)
+                    searchField.forceActiveFocus();
+            }
+        }
+
+        Component.onCompleted: Qt.callLater(launcherContent.prepareOpening)
+        onVisibleChanged: {
+            if (visible)
+                Qt.callLater(launcherContent.prepareOpening);
+        }
+
+        Connections {
+            target: root
+            function onExpandedChanged() {
+                if (root.expanded)
+                    Qt.callLater(launcherContent.prepareOpening);
+                else {
+                    favoriteMenu.close();
+                    root.selectionInvalidated();
+                }
+            }
+        }
+
         QQC2.Menu {
             id: favoriteMenu
             property string applicationId: ""
@@ -356,7 +434,6 @@ PlasmoidItem {
                     }
                     text: root.searchText
                     onTextEdited: root.searchText = text
-                    Component.onCompleted: searchField.forceActiveFocus()
                     Keys.onDownPressed: event => {
                         applicationGrid.focusForKeyboard(true);
                         event.accepted = true;
@@ -371,10 +448,7 @@ PlasmoidItem {
                             applicationGrid.requestActivation();
                         event.accepted = true;
                     }
-                    Keys.onEscapePressed: event => {
-                        root.searchText = "";
-                        event.accepted = true;
-                    }
+                    Keys.onEscapePressed: event => launcherContent.handleEscape(event)
                 }
 
                 PlasmaComponents.ToolButton {
@@ -437,11 +511,7 @@ PlasmoidItem {
                                 applicationGrid.focusForKeyboard(true);
                                 event.accepted = true;
                             }
-                            Keys.onEscapePressed: event => {
-                                root.searchText = "";
-                                searchField.forceActiveFocus();
-                                event.accepted = true;
-                            }
+                            Keys.onEscapePressed: event => launcherContent.handleEscape(event)
                         }
 
                         Rectangle {
@@ -506,11 +576,7 @@ PlasmoidItem {
                                 applicationGrid.focusForKeyboard(true);
                                 event.accepted = true;
                             }
-                            Keys.onEscapePressed: event => {
-                                root.searchText = "";
-                                searchField.forceActiveFocus();
-                                event.accepted = true;
-                            }
+                            Keys.onEscapePressed: event => launcherContent.handleEscape(event)
 
                             QQC2.ScrollBar.vertical: QQC2.ScrollBar {
                                 id: categoryScrollBar
@@ -718,11 +784,7 @@ PlasmoidItem {
                                 applicationGrid.requestActivation();
                             event.accepted = true;
                         }
-                        Keys.onEscapePressed: event => {
-                            root.searchText = "";
-                            searchField.forceActiveFocus();
-                            event.accepted = true;
-                        }
+                        Keys.onEscapePressed: event => launcherContent.handleEscape(event)
 
                         QQC2.ScrollBar.vertical: QQC2.ScrollBar {
                             id: applicationScrollBar
