@@ -150,3 +150,38 @@ vertical, outro monitor/escala, saída limpa do qmllint, atalho global ou mediç
 de CPU/RAM/latência. Esses itens continuam sem evidência específica nesta rodada.
 Somente documentação alterada para registrar o retorno; não é necessário
 reinstalar o pacote ou repetir os cinco testes. Sem merge.
+
+## Próxima rodada — atalho e persistência
+
+1. Botão direito no ícone do launcher no painel → Configurar Plasma Launcher Lab
+   → Atalho de teclado. Escolher uma combinação livre; cancelar se houver conflito.
+   Não substituir atalhos do KRunner ou do launcher atual.
+2. Com outra janela ativa, pressionar o atalho: conferir abertura e digitação
+   imediata sem clique. Pressionar novamente para fechar.
+3. Repetir cinco vezes; pesquisar kate e abrir com Enter em uma rodada.
+   Informar a combinação usada e o resultado de abrir, focar e alternar.
+4. No próximo login natural, conferir presença do widget, favoritos e atalho.
+   Não remover/recriar a instância para esse teste; não forçar logout.
+
+Sem código novo ou reinstalação para esta rodada.
+
+### Plano de medição
+
+O widget roda dentro de plasmashell. Consumo total desse processo não deve ser
+atribuído integralmente ao launcher. Registrar várias amostras com popup fechado,
+aberto e após ciclos de abrir/buscar/fechar, controlando outras atividades.
+RSS/PSS do processo e tempo de CPU são indicadores agregados; diferenças entre
+estados podem incluir caches e outros widgets. Não concluir vazamento por uma
+única subida de memória. Uma atribuição incremental mais rigorosa requer uma
+sessão de teste isolada e comparação sem/com o widget.
+
+Latência de abertura exige marcar evento de entrada e primeiro frame visível;
+avaliação visual pode registrar engasgos percebidos, mas não fornece milissegundos.
+Não há medições ou metas quantitativas homologadas nesta etapa.
+
+### Dependências de integração conferidas em 05/11/2026
+
+Cadeia atual: PR #2 → #3 → #4 → #5 → #6. Cada base corresponde à
+branch anterior; o head 5dfff6c está 55 commits à frente de main, sem commits
+atrás. Isso verifica ancestralidade, não substitui revisão completa de código.
+A leitura direta do PR #6 informa mergeable=true/clean. Nenhum merge executado.
