@@ -90,3 +90,11 @@ Relatar terminal, revisão e sequência em caso de falha. Não reconstruir cache
 editar configuração do painel ou instalar dependências para contornar erros.
 Não há reordenação/drag-and-drop, importação, sincronização entre instâncias ou
 ações de sessão neste incremento. Laboratório PoC 02 inalterado. Sem merge.
+
+## Retorno do usuário — 05/11/2026
+
+Na revisão 0499d986, o usuário informou “tudo certo ate aqui”, após o roteiro
+de inclusão, abertura, remoção e persistência. A captura mostra a seção Favoritos
+com Kate e Visual Studio Code e seus nomes/ícones correspondentes. Registrar como
+aceite geral da rodada no viewer; não há saída de qmllint nem resultados isolados
+por passo anexados. A futura instância no painel precisa de validação própria.
