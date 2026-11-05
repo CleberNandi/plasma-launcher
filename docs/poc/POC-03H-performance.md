@@ -3,7 +3,7 @@
 **Data:** 05/11/2026.
 **Base funcional:** 5fd072658fbf069daea33338b8b5f0a193ca5895.
 **Branch:** feat/poc-03-panel-popup.
-**Status:** primeira coleta local concluída; estabilização entre rodadas ainda não verificada. Sem merge.
+**Status:** duas coletas locais concluídas no mesmo processo; crescimento menor na segunda rodada. Sem merge.
 
 ## Revisão do checkpoint
 
@@ -140,3 +140,38 @@ com o final desta rodada e o crescimento entre as duas fases fechadas novas.
 Se a memória estabilizar, isso favorece a hipótese de aquecimento/cache;
 se voltar a crescer, investigar tendência em mais ciclos antes de concluir.
 Não reiniciar para produzir artificialmente uma nova baseline fria.
+
+## Segunda coleta local — 05/11/2026
+
+JSON com status complete, mesmo PID e start_ticks da primeira coleta,
+SC_CLK_TCK=100 e todas as amostras de memória presentes. Durações observadas:
+5,035 s / 15,114 s / 5,037 s. A execução do coletor é válida; não há registro
+automático das ações do usuário durante a fase de interação.
+
+| Fase | CPU média (% de um núcleo) | RSS mediana (KiB) | PSS mediana (KiB) |
+| --- | ---: | ---: | ---: |
+| Fechado antes | 0,199 | 597752 | 326873 |
+| Interação | 2,382 | 600300 | 329384 |
+| Fechado depois | 0,397 | 600372 | 329461 |
+
+Comparação entre medianas fechadas de cada rodada:
+
+| Rodada | Delta RSS (MiB) | Delta PSS (MiB) |
+| --- | ---: | ---: |
+| 1 | +13,88 | +13,81 |
+| 2 | +2,56 | +2,53 |
+
+O RSS inicial da segunda rodada está apenas 52 KiB abaixo do RSS final anterior.
+Entre os dois finais: RSS +2,51 MiB, PSS -0,80 MiB. PSS pode variar também pela
+distribuição de páginas compartilhadas; não interpretar a queda como prova
+de liberação de alocações do launcher.
+
+O crescimento menor é compatível com aquecimento/cache se aproximando de um
+patamar, mas duas coletas curtas não comprovam estabilidade definitiva nem
+ausência de vazamento. Não apareceu evidência de crescimento repetido da
+mesma magnitude. Escopo continua sendo todo o plasmashell, sem atribuição isolada
+ao widget e sem medida de latência. Nenhum relato de engasgos foi confirmado.
+
+Não solicitar uma terceira rodada idêntica sem novo sintoma ou tendência que
+justifique. Para o checkpoint experimental, registrar esta caracterização
+limitada e seguir com a evidência de lint e revisão final de integração.
