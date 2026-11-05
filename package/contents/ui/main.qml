@@ -8,9 +8,67 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
 import org.kde.plasma.private.kicker as Kicker
+import org.kde.kitemmodels as KItemModels
 
 PlasmoidItem {
     id: root
+
+    signal selectionInvalidated()
+
+    function nextGridIndex(row, count, columns, direction) {
+        if (count <= 0)
+            return -1;
+        if (!Number.isInteger(row) || row < 0 || row >= count)
+            return 0;
+        const stride = Math.max(1, columns);
+        if (direction === "left")
+            return Math.max(0, row - 1);
+        if (direction === "right")
+            return Math.min(count - 1, row + 1);
+        if (direction === "up")
+            return Math.max(0, row - stride);
+        if (direction === "down")
+            return Math.min(count - 1, row + stride);
+        return row;
+    }
+
+    property string searchText: ""
+    readonly property string searchQuery: root.searchText.trim()
+    readonly property bool searching: root.searchQuery.length > 0
+    readonly property var allApplicationsModel: root.catalogReady
+        && root.catalogRevision >= 0 && appsModel.count > 0
+        ? appsModel.modelForRow(0) : null
+
+    property bool searchResultsReady: false
+
+    // Desvincular a view antes de filtrar: nesta sessão nativa, alterações
+    // incrementais deixavam roles de outro aplicativo no card sobrevivente.
+    function scheduleSearchRefresh() {
+        root.searchResultsReady = false;
+        root.selectionInvalidated();
+        if (searchProxy)
+            Qt.callLater(root.finishSearchRefresh);
+    }
+
+    function finishSearchRefresh() {
+        if (!root.catalogReady || !root.allApplicationsModel)
+            return;
+        searchProxy.invalidateFilter();
+        root.searchResultsReady = true;
+    }
+
+    onSearchQueryChanged: {
+        root.scheduleSearchRefresh();
+        root.launchStatus = "Nenhuma execução solicitada";
+    }
+
+    onAllApplicationsModelChanged: root.scheduleSearchRefresh()
+
+    function matchesSearch(name, description) {
+        const terms = root.searchQuery.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+        const haystack = (String(name ?? "") + " " + String(description ?? "")).toLowerCase();
+        return terms.every(term => haystack.includes(term));
+    }
 
     property bool catalogReady: true
     property int catalogRevision: 0
@@ -21,7 +79,7 @@ PlasmoidItem {
         // Índices são posições: após reconstrução, voltar ao primeiro grupo.
         root.subcategoryPath = [];
         root.selectedCategoryIndex = 0;
-        root.selectedCategoryName = "Aplicativos";
+        root.selectedCategoryName = appsModel.labelForRow(0) || "Aplicativos";
         root.catalogReady = true;
     }
 
@@ -29,6 +87,7 @@ PlasmoidItem {
         target: appsModel
 
         function onModelAboutToBeReset() {
+            root.selectionInvalidated();
             root.catalogReady = false;
             root.subcategoryPath = [];
             root.launchStatus = "Nenhuma execução solicitada";
@@ -71,11 +130,13 @@ PlasmoidItem {
         const child = current.modelForRow(row);
         if (!child)
             return;
+        root.selectionInvalidated();
         root.subcategoryPath = root.subcategoryPath.concat([{row: row, label: label}]);
         root.launchStatus = "Nenhuma execução solicitada";
     }
 
     function leaveSubcategory() {
+        root.selectionInvalidated();
         root.subcategoryPath = root.subcategoryPath.slice(0, -1);
         root.launchStatus = "Nenhuma execução solicitada";
     }
@@ -94,6 +155,8 @@ PlasmoidItem {
     function selectCategory(row, label) {
         if (!root.catalogReady || row < 0 || row >= appsModel.count)
             return;
+        root.selectionInvalidated();
+        root.searchText = "";
         root.subcategoryPath = [];
         root.selectedCategoryIndex = row;
         root.selectedCategoryName = label;
@@ -102,11 +165,33 @@ PlasmoidItem {
 
 
     function activateEntry(view, row, entry) {
-        const currentModel = view ? view.model : null;
+        let currentModel = view ? view.model : null;
         if (!root.catalogReady || !currentModel || !entry
             || Boolean(entry.disabled) || Boolean(entry.isSeparator)
             || !Number.isInteger(row) || row < 0 || row >= currentModel.count)
             return;
+
+        if (currentModel === searchProxy) {
+            if (!root.searchResultsReady || !root.searching)
+                return;
+            const sourceIndex = searchProxy.mapToSource(searchProxy.index(row, 0));
+            // Usar a referência dinâmica ao Kicker: sourceModel é tipado
+            // como QAbstractItemModel e não declara a propriedade count.
+            currentModel = root.allApplicationsModel;
+            // QModelIndex.row integra a API QML documentada pelo Qt, mas
+            // seus metadados não são reconhecidos por este qmllint.
+            // qmllint disable missing-property
+            row = sourceIndex.row;
+            // qmllint enable missing-property
+            if (!currentModel || !Number.isInteger(row)
+                || row < 0 || row >= currentModel.count)
+                return;
+            // Não abrir silenciosamente um item diferente do nome apresentado.
+            if (String(entry.display ?? "") !== currentModel.labelForRow(row)) {
+                root.launchStatus = "Resultado desatualizado; refaça a pesquisa.";
+                return;
+            }
+        }
 
         if (Boolean(entry.hasChildren)) {
             root.enterSubcategory(currentModel, row, String(entry.display ?? ""));
@@ -128,6 +213,7 @@ PlasmoidItem {
         }
     }
 
+
     Plasmoid.icon: "start-here-kde"
     toolTipMainText: "Plasma Launcher Lab"
 
@@ -136,10 +222,31 @@ PlasmoidItem {
         autoPopulate: true
         // Preservar categorias principais, reunindo os aplicativos dos subgrupos.
         flat: true
-        showAllApps: false
+        showAllApps: true
+        showAllAppsCategorized: false
+        showFavoritesPlaceholder: false
+        showRootSeparator: false
         showRecentApps: false
         showRecentDocs: false
         showPowerSession: false
+    }
+
+
+    KItemModels.KSortFilterProxyModel {
+        id: searchProxy
+        sourceModel: root.allApplicationsModel
+        sortRoleName: ""
+        // Resolver dinamicamente o ID do role description; o callback substitui
+        // o filtro padrão e combina esse role com Qt.DisplayRole.
+        filterRoleName: "description"
+        filterRowCallback: function(sourceRow, sourceParent) {
+            const source = searchProxy.sourceModel;
+            if (!source)
+                return false;
+            const sourceIndex = source.index(sourceRow, 0, sourceParent);
+            return root.matchesSearch(source.data(sourceIndex, Qt.DisplayRole),
+                source.data(sourceIndex, searchProxy.filterRole));
+        }
     }
 
     fullRepresentation: Item {
@@ -177,6 +284,43 @@ PlasmoidItem {
                     }
                 }
 
+                QQC2.TextField {
+                    id: searchField
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 280
+                    Layout.minimumWidth: 160
+                    placeholderText: "Pesquisar aplicativos…"
+                    text: root.searchText
+                    onTextEdited: root.searchText = text
+                    Component.onCompleted: searchField.forceActiveFocus()
+                    Keys.onDownPressed: event => {
+                        applicationGrid.focusForKeyboard(true);
+                        event.accepted = true;
+                    }
+                    Keys.onReturnPressed: event => {
+                        if (!event.isAutoRepeat && applicationGrid.focusForKeyboard(true))
+                            applicationGrid.requestActivation();
+                        event.accepted = true;
+                    }
+                    Keys.onEnterPressed: event => {
+                        if (!event.isAutoRepeat && applicationGrid.focusForKeyboard(true))
+                            applicationGrid.requestActivation();
+                        event.accepted = true;
+                    }
+                    Keys.onEscapePressed: event => {
+                        root.searchText = "";
+                        event.accepted = true;
+                    }
+                }
+
+                PlasmaComponents.ToolButton {
+                    text: "Limpar"
+                    visible: root.searchText.length > 0
+                    onClicked: {
+                        root.searchText = "";
+                        searchField.forceActiveFocus();
+                    }
+                }
             }
 
             RowLayout {
@@ -195,6 +339,44 @@ PlasmoidItem {
                     model: appsModel
                     enabled: root.catalogReady
                     boundsBehavior: Flickable.StopAtBounds
+                    activeFocusOnTab: true
+                    keyNavigationEnabled: false
+                    currentIndex: root.selectedCategoryIndex
+
+                    function moveCategory(delta) {
+                        if (!root.catalogReady || categoryList.count <= 0)
+                            return;
+                        const row = Math.max(0, Math.min(categoryList.count - 1,
+                            root.selectedCategoryIndex + delta));
+                        root.selectCategory(row, appsModel.labelForRow(row));
+                        categoryList.positionViewAtIndex(row, ListView.Contain);
+                    }
+
+                    Keys.onUpPressed: event => {
+                        categoryList.moveCategory(-1);
+                        event.accepted = true;
+                    }
+                    Keys.onDownPressed: event => {
+                        categoryList.moveCategory(1);
+                        event.accepted = true;
+                    }
+                    Keys.onRightPressed: event => {
+                        applicationGrid.focusForKeyboard(true);
+                        event.accepted = true;
+                    }
+                    Keys.onReturnPressed: event => {
+                        applicationGrid.focusForKeyboard(true);
+                        event.accepted = true;
+                    }
+                    Keys.onEnterPressed: event => {
+                        applicationGrid.focusForKeyboard(true);
+                        event.accepted = true;
+                    }
+                    Keys.onEscapePressed: event => {
+                        root.searchText = "";
+                        searchField.forceActiveFocus();
+                        event.accepted = true;
+                    }
 
                     QQC2.ScrollBar.vertical: QQC2.ScrollBar {
                         id: categoryScrollBar
@@ -208,8 +390,12 @@ PlasmoidItem {
                         width: categoryList.width - categoryScrollBar.width - 4
                         height: 32
                         text: String(model.display ?? "")
-                        highlighted: root.selectedCategoryIndex === index
-                        onClicked: root.selectCategory(index, String(model.display ?? ""))
+                        highlighted: !root.searching && root.selectedCategoryIndex === index
+                        focusPolicy: Qt.NoFocus
+                        onClicked: {
+                            categoryList.forceActiveFocus();
+                            root.selectCategory(index, String(model.display ?? ""));
+                        }
 
                         contentItem: RowLayout {
                             spacing: 8
@@ -242,14 +428,16 @@ PlasmoidItem {
 
                         PlasmaComponents.Button {
                             text: "Voltar"
-                            visible: root.subcategoryPath.length > 0
+                            visible: !root.searching && root.subcategoryPath.length > 0
                             flat: true
                             enabled: root.catalogReady && root.subcategoryPath.length > 0
                             onClicked: root.leaveSubcategory()
                         }
 
                         PlasmaComponents.Label {
-                            text: root.selectedCategoryName
+                            text: root.searching ? (root.searchResultsReady
+                                ? "Resultados (" + searchProxy.count + ")" : "Pesquisando…")
+                                : root.selectedCategoryName
                                 + (root.subcategoryPath.length > 0
                                     ? " / " + root.subcategoryPath.map(step => step.label).join(" / ")
                                     : "")
@@ -270,70 +458,204 @@ PlasmoidItem {
                             Math.floor((width - applicationScrollBar.width - 8) / 112))
                         cellWidth: Math.max(1, (width - applicationScrollBar.width - 8) / columnCount)
                         cellHeight: 104
-                        model: root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
-                        // Reposicionamento pertence à view, não ao delegate destruído.
-                        onModelChanged: applicationGrid.positionViewAtBeginning()
+                        model: root.searching ? (root.searchResultsReady ? searchProxy : null)
+                            : root.catalogRevision >= 0 ? root.selectedApplicationModel() : null
+                        signal activationRequested(int row)
+                        currentIndex: -1
+                        activeFocusOnTab: true
+                        keyNavigationEnabled: false
+
+                        function clearSelection() {
+                            applicationGrid.currentIndex = -1;
+                        }
+
+                        function focusForKeyboard(first) {
+                            if (!root.catalogReady || applicationGrid.count <= 0)
+                                return false;
+                            if (first || applicationGrid.currentIndex < 0
+                                || applicationGrid.currentIndex >= applicationGrid.count)
+                                applicationGrid.currentIndex = 0;
+                            applicationGrid.positionViewAtIndex(applicationGrid.currentIndex, GridView.Contain);
+                            applicationGrid.forceLayout();
+                            applicationGrid.forceActiveFocus();
+                            return true;
+                        }
+
+                        function moveSelection(direction) {
+                            if (!root.catalogReady || applicationGrid.count <= 0)
+                                return;
+                            applicationGrid.currentIndex = root.nextGridIndex(applicationGrid.currentIndex,
+                                applicationGrid.count, applicationGrid.columnCount, direction);
+                            applicationGrid.positionViewAtIndex(applicationGrid.currentIndex, GridView.Contain);
+                        }
+
+                        function requestActivation() {
+                            if (!root.catalogReady || !applicationGrid.activeFocus
+                                || applicationGrid.currentIndex < 0
+                                || applicationGrid.currentIndex >= applicationGrid.count)
+                                return;
+                            applicationGrid.forceLayout();
+                            applicationGrid.activationRequested(applicationGrid.currentIndex);
+                        }
+
+                        // Reposicionamento/seleção pertencem à view que continua viva.
+                        onModelChanged: {
+                            applicationGrid.clearSelection();
+                            applicationGrid.positionViewAtBeginning();
+                        }
+                        onCountChanged: applicationGrid.clearSelection()
+
+                        Connections {
+                            target: root
+                            function onSelectionInvalidated() { applicationGrid.clearSelection(); }
+                        }
+
+                        Connections {
+                            target: applicationGrid.model
+                            function onModelAboutToBeReset() { applicationGrid.clearSelection(); }
+                            function onModelReset() { applicationGrid.clearSelection(); }
+                            function onRowsInserted() { applicationGrid.clearSelection(); }
+                            function onRowsRemoved() { applicationGrid.clearSelection(); }
+                            function onRowsMoved() { applicationGrid.clearSelection(); }
+                            function onLayoutChanged() { applicationGrid.clearSelection(); }
+                        }
+
+                        Keys.onLeftPressed: event => {
+                            if (applicationGrid.currentIndex >= 0
+                                && applicationGrid.currentIndex % applicationGrid.columnCount === 0)
+                                categoryList.forceActiveFocus();
+                            else
+                                applicationGrid.moveSelection("left");
+                            event.accepted = true;
+                        }
+                        Keys.onRightPressed: event => {
+                            applicationGrid.moveSelection("right");
+                            event.accepted = true;
+                        }
+                        Keys.onUpPressed: event => {
+                            if (applicationGrid.currentIndex >= 0
+                                && applicationGrid.currentIndex < applicationGrid.columnCount)
+                                searchField.forceActiveFocus();
+                            else
+                                applicationGrid.moveSelection("up");
+                            event.accepted = true;
+                        }
+                        Keys.onDownPressed: event => {
+                            applicationGrid.moveSelection("down");
+                            event.accepted = true;
+                        }
+                        Keys.onReturnPressed: event => {
+                            if (!event.isAutoRepeat)
+                                applicationGrid.requestActivation();
+                            event.accepted = true;
+                        }
+                        Keys.onEnterPressed: event => {
+                            if (!event.isAutoRepeat)
+                                applicationGrid.requestActivation();
+                            event.accepted = true;
+                        }
+                        Keys.onEscapePressed: event => {
+                            root.searchText = "";
+                            searchField.forceActiveFocus();
+                            event.accepted = true;
+                        }
 
                         QQC2.ScrollBar.vertical: QQC2.ScrollBar {
                             id: applicationScrollBar
                             policy: QQC2.ScrollBar.AsNeeded
                         }
 
-                        delegate: QQC2.ItemDelegate {
+                        delegate: Item {
                             id: applicationDelegate
-                            required property var model
                             required property int index
-                            readonly property bool actionable:
-                                Boolean(applicationDelegate.model.hasChildren)
-                                    || root.isLaunchableEntry(applicationDelegate.model)
+                            // Roles explícitos: nome, ícone e ativação observam
+                            // os mesmos dados quando o proxy altera suas linhas.
+                            required property var display
+                            required property var decoration
+                            required property var description
+                            required property var favoriteId
+                            required property var isParent
+                            required property var hasChildren
+                            required property var isSeparator
+                            required property var disabled
+                            readonly property var entryData: ({
+                                display: applicationDelegate.display,
+                                favoriteId: applicationDelegate.favoriteId,
+                                isParent: applicationDelegate.isParent,
+                                hasChildren: applicationDelegate.hasChildren,
+                                isSeparator: applicationDelegate.isSeparator,
+                                disabled: applicationDelegate.disabled
+                            })
                             width: applicationGrid.cellWidth - 8
                             height: applicationGrid.cellHeight - 8
-                            padding: 8
-                            text: String(model.display ?? "")
-                            hoverEnabled: true
-                            enabled: root.catalogReady
-                            focusPolicy: applicationDelegate.actionable ? Qt.StrongFocus : Qt.NoFocus
-                            Accessible.name: Boolean(applicationDelegate.model.hasChildren)
-                                ? "Abrir grupo " + applicationDelegate.text
-                                : root.isLaunchableEntry(applicationDelegate.model)
-                                    ? "Abrir " + applicationDelegate.text : applicationDelegate.text
-                            onClicked: root.activateEntry(applicationDelegate.GridView.view,
-                                applicationDelegate.index, applicationDelegate.model)
-
-                            QQC2.ToolTip.visible: applicationDelegate.hovered
-                            QQC2.ToolTip.delay: 600
-                            QQC2.ToolTip.text: applicationDelegate.text
-                                + (String(applicationDelegate.model.description ?? "").length > 0
-                                    ? "\n" + String(applicationDelegate.model.description) : "")
-
-                            contentItem: ColumnLayout {
-                                spacing: 4
-
-                                Kirigami.Icon {
-                                    source: applicationDelegate.model.decoration
-                                    implicitWidth: 32
-                                    implicitHeight: 32
-                                    Layout.alignment: Qt.AlignHCenter
+                            QQC2.ItemDelegate {
+                                id: applicationButton
+                                anchors.fill: parent
+                                padding: 8
+                                text: String(applicationDelegate.display ?? "")
+                                hoverEnabled: true
+                                enabled: root.catalogReady
+                                focusPolicy: Qt.NoFocus
+                                highlighted: applicationGrid.activeFocus
+                                    && applicationGrid.currentIndex === applicationDelegate.index
+                                Accessible.name: Boolean(applicationDelegate.hasChildren)
+                                    ? "Abrir grupo " + applicationButton.text
+                                    : root.isLaunchableEntry(applicationDelegate.entryData)
+                                        ? "Abrir " + applicationButton.text : applicationButton.text
+                                onClicked: {
+                                    const view = applicationDelegate.GridView.view;
+                                    view.currentIndex = applicationDelegate.index;
+                                    view.forceActiveFocus();
+                                    root.activateEntry(view, applicationDelegate.index, applicationDelegate.entryData);
                                 }
 
-                                PlasmaComponents.Label {
-                                    text: applicationDelegate.text
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignHCenter
-                                    wrapMode: Text.Wrap
-                                    maximumLineCount: 2
-                                    elide: Text.ElideRight
+                                Connections {
+                                    target: applicationGrid
+                                    function onActivationRequested(row) {
+                                        if (applicationDelegate.index === row)
+                                            root.activateEntry(applicationGrid, row, applicationDelegate.entryData);
+                                    }
                                 }
 
-                                Item { Layout.fillHeight: true }
+                                QQC2.ToolTip.visible: applicationButton.hovered
+                                QQC2.ToolTip.delay: 600
+                                QQC2.ToolTip.text: applicationButton.text
+                                    + (String(applicationDelegate.description ?? "").length > 0
+                                        ? "\n" + String(applicationDelegate.description) : "")
+
+                                contentItem: ColumnLayout {
+                                    spacing: 4
+
+                                    Kirigami.Icon {
+                                        source: applicationDelegate.decoration
+                                        implicitWidth: 32
+                                        implicitHeight: 32
+                                        Layout.alignment: Qt.AlignHCenter
+                                    }
+
+                                    PlasmaComponents.Label {
+                                        text: applicationButton.text
+                                        color: applicationButton.highlighted
+                                            ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+                                        Layout.fillWidth: true
+                                        horizontalAlignment: Text.AlignHCenter
+                                        wrapMode: Text.Wrap
+                                        maximumLineCount: 2
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Item { Layout.fillHeight: true }
+                                }
                             }
                         }
                     }
 
                     PlasmaComponents.Label {
                         Layout.fillWidth: true
-                        visible: root.catalogReady && applicationGrid.count === 0
-                        text: "Nenhuma entrada disponível nesta categoria."
+                        visible: root.catalogReady && (!root.searching || root.searchResultsReady)
+                            && applicationGrid.count === 0
+                        text: root.searching ? "Nenhum aplicativo encontrado."
+                            : "Nenhuma entrada disponível nesta categoria."
                         wrapMode: Text.WordWrap
                     }
                 }
